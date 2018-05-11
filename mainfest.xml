@@ -5,6 +5,22 @@
                 <description>iQuix is an installer extension</description>
                 <element>com_iquix</element>
                 <type>component</type>
+                <version>1.0.4</version>
+                <client>site</client>
+                <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.0.4</infourl>
+                <downloads>
+                        <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.0.4/com_iquix_v1.0.4.zip</downloadurl>
+                </downloads>
+                <tags>
+                        <tag>rc</tag>
+                </tags>
+                <targetplatform name="joomla" version="3.0" />
+        </update>       
+        <update>
+                <name>Quix Launcher</name>
+                <description>iQuix is an installer extension</description>
+                <element>com_iquix</element>
+                <type>component</type>
                 <version>1.0.3</version>
                 <client>site</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.0.3</infourl>
