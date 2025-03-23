@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" version="3.0" method="upgrade">
+    <name>com_iquix</name>
+	<creationDate>11th April 2018</creationDate>
+    <copyright>Copyright (C) 2015. All rights reserved.</copyright>
+    <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+    <author>ThemeXpert</author>
+    <authorEmail>info@themexpert.com</authorEmail>
+    <authorUrl>http://www.themexpert.com</authorUrl>
+    <version>1.7.0</version>
+    <description>Page builder for Joomla</description>
+    <scriptfile>script.php</scriptfile>
+
+    <languages folder="languages/site">
+		<language tag="en-GB">en-GB.com_iquix.ini</language>
+    </languages>
+        
+    <administration>
+        <files folder="admin">
+			<folder>setup</folder>
+			<file>iquix.php</file>
+			<file>script.php</file>
+			<file>setup.html</file>
+			<file>config.xml</file>
+			<file>iquix.xml</file>
+			<file>access.xml</file>
+		</files>
+        <languages folder="languages/admin">
+			<language tag="en-GB">en-GB.com_iquix.ini</language>
+			<language tag="en-GB">en-GB.com_iquix.sys.ini</language>
+        </languages>
+    </administration>
+	<updateservers>
+         <!-- Note: No spaces or linebreaks allowed between the server tags -->
+        <server type="extension" priority="1" name="iQuix"><![CDATA[https://raw.githubusercontent.com/themexpert/iquix/master/mainfest.xml]]></server>
+    </updateservers>
+</extension>

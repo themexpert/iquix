@@ -1,0 +1,26 @@
+[
+	{
+		"index": 1,
+		"title": "Requirements",
+		"desc" : "Server must satisfy Quix requirements",
+		"template": "requirements"
+	},
+	{
+		"index": 2,
+		"title": "Validation",
+		"desc" : "Authenticate yourself",
+		"template": "source"
+	},
+	{
+		"index": 3,
+		"title": "Installation",
+		"desc" : "Ignite the thruster",
+		"template": "installing"
+	},
+	{
+		"index": 4,
+		"title": "Maintenance",
+		"desc" : "Cleaning up the system",
+		"template": "maintenance"
+	}
+]
