@@ -1,34 +1,35 @@
 <?php
 /**
-* @package		quix
-* @copyright	Copyright (C) 2010 - 2017 ThemeXpert.com. All rights reserved.
-* @license		GNU/GPL, see LICENSE.php
-* quix is free software. This version may have been modified pursuant
-* to the GNU General Public License, and as distributed it includes or
-* is derivative of works licensed under the GNU General Public License or
-* other free or open source software licenses.
-* See COPYRIGHT.php for copyright notices and details.
-*/
+ * @package        quix
+ * @copyright      Copyright (C) 2010 - 2017 ThemeXpert.com. All rights reserved.
+ * @license        GNU/GPL, see LICENSE.php
+ * quix is free software. This version may have been modified pursuant
+ * to the GNU General Public License, and as distributed it includes or
+ * is derivative of works licensed under the GNU General Public License or
+ * other free or open source software licenses.
+ * See COPYRIGHT.php for copyright notices and details.
+ */
 defined('_JEXEC') or die('Unauthorized Access');
 
-if (defined('JDEBUG') && JDEBUG)
-{
-	\JLog::addLogger(array('text_file' => 'iquix.log.php'), \JLog::ALL, array('iquix'));
+use Joomla\CMS\Factory;
+use Joomla\CMS\Filesystem\File;
+use Joomla\CMS\Log\Log;
+// define version
+define('IQX_VERSION', '1.8.0');
+
+if (defined('JDEBUG') && JDEBUG) {
+	Log::addLogger(array('text_file' => 'iquix.log.php'), Log::ALL, array('iquix'));
 }
 
-
-jimport('joomla.filesystem.folder');
-jimport('joomla.filesystem.file');
-
-$app = JFactory::getApplication();
+$app = Factory::getApplication();
 $input = $app->input;
 $exitInstallation = $input->get('exitInstallation', false, 'bool');
 
 // Check if there's a file initiated for installation
 $file = JPATH_ROOT . '/tmp/quix.installation';
 if ($exitInstallation) {
-	if (JFile::exists($file)) {
-		JFile::delete($file);
+	if (File::exists($file)) {
+		File::delete($file);
 		return $app->redirect('index.php?option=com_quix');
 	}
 }
@@ -44,28 +45,11 @@ if ($launchInstaller) {
 
 	$contents = json_encode($obj);
 
-	if (!JFile::exists($file)) {
-		JFile::write($file, $contents);
-	}	
+	if (!File::exists($file)) {
+		File::write($file, $contents);
+	}
 }
 
 // finally check for setup view or not
-// $active = $input->get('active', 0, 'int');
-// if (JFile::exists($file) || $active) {
-	require_once(dirname(__FILE__) . '/setup/bootstrap.php');
-	JExit();
-// }
-
-// Regular operation starts
-// Access check.
-// if ( !JFactory::getUser()->authorise( 'core.manage', 'com_iquix' ) ) {
-//   return JError::raiseWarning( 404, JText::_( 'JERROR_ALERTNOAUTHOR' ) );
-// }
-
-// Include dependancies
-// jimport( 'quix.app.bootstrap' );
-// jimport( 'quix.app.init' );
-
-// $controller = JControllerLegacy::getInstance( 'iQuix' );
-// $controller->execute( JFactory::getApplication()->input->get( 'task' ) );
-// $controller->redirect();
+require_once(dirname(__FILE__) . '/setup/bootstrap.php');
+JExit();

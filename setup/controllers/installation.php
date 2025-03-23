@@ -1,7 +1,7 @@
 <?php
 /**
  * @package        Quix
- * @copyright      Copyright (C) 2010 - 2017 ThemeXpert.com. All rights reserved.
+ * @copyright      Copyright (C) 2010 - 2023 ThemeXpert.com. All rights reserved.
  * @license        GNU/GPL, see LICENSE.php
  * Quix is free software. This version may have been modified pursuant
  * to the GNU General Public License, and as distributed it includes or
@@ -10,220 +10,153 @@
  * See COPYRIGHT.php for copyright notices and details.
  */
 defined('_JEXEC') or die('Unauthorized Access');
+
+use Joomla\CMS\Factory;
+use Joomla\CMS\Filesystem\File;
+use Joomla\CMS\Filesystem\Folder;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Log\Log;
 use Joomla\Archive\Archive;
+use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Joomla\CMS\Installer\Installer;
+use Joomla\CMS\Router\Route;
+
 require_once(dirname(__FILE__).'/controller.php');
 
 class iQuixControllerInstallation extends iQuixSetupController
 {
-
+    /**
+     * Cleans cache files
+     *
+     * @return void
+     */
     public function cleanCache()
     {
+        // Import filesystem classes (for Joomla 3 compatibility)
         jimport('joomla.filesystem.file');
         jimport('joomla.filesystem.folder');
         jimport('joomla.filesystem.path');
 
-        $cssfiles = (array) JFolder::files(JPATH_ROOT.'/media/quix/css');
-        array_map(
-            function ($file) {
-                if ($file == 'index.html') {
-                    return;
-                }
-                JFile::delete(JPATH_ROOT.'/media/quix/css/'.$file);
-            },
-            $cssfiles
-        );
-
-        $jsfiles = (array) JFolder::files(JPATH_ROOT.'/media/quix/js');
-        array_map(
-            function ($file) {
-                if ($file == 'index.html') {
-                    return;
-                }
-                JFile::delete(JPATH_ROOT.'/media/quix/js/'.$file);
-            },
-            $jsfiles
-        );
-
-        // Clear relavent cache
-        $this->cachecleaner('com_quix');
-        $this->cachecleaner('mod_quix');
-        $this->cachecleaner('libquix', 1);
-        $this->cachecleaner('lib_quix', 1);
-        $this->cachecleaner('lib_quix');
-        $this->cachecleaner('quix', 1);
-        $this->cachecleaner('quix');
-
-        if (JDEBUG) {
-            \JLog::add("iQuix - Cleared cache", JLog::INFO, 'iquix');
+        try {
+            // Determine which file handling classes to use
+            $fileClass = class_exists('\\Joomla\\CMS\\Filesystem\\File') ? '\\Joomla\\CMS\\Filesystem\\File' : '\\JFile';
+            $folderClass = class_exists('\\Joomla\\CMS\\Filesystem\\Folder') ? '\\Joomla\\CMS\\Filesystem\\Folder' : '\\JFolder';
+            
+            // Clean CSS files
+            $cssPath = JPATH_ROOT . '/media/quix/css';
+            if ($folderClass::exists($cssPath)) {
+                $cssfiles = (array) $folderClass::files($cssPath);
+                array_map(
+                    function ($file) use ($fileClass, $cssPath) {
+                        if ($file == 'index.html') {
+                            return;
+                        }
+                        $fileClass::delete($cssPath . '/' . $file);
+                    },
+                    $cssfiles
+                );
+            }
+            
+            // Clean JS files
+            $jsPath = JPATH_ROOT . '/media/quix/js';
+            if ($folderClass::exists($jsPath)) {
+                $jsfiles = (array) $folderClass::files($jsPath);
+                array_map(
+                    function ($file) use ($fileClass, $jsPath) {
+                        if ($file == 'index.html') {
+                            return;
+                        }
+                        $fileClass::delete($jsPath . '/' . $file);
+                    },
+                    $jsfiles
+                );
+            }
+            
+            // Clear relevant cache
+            $this->cachecleaner('com_quix');
+            $this->cachecleaner('mod_quix');
+            $this->cachecleaner('libquix', 1);
+            $this->cachecleaner('lib_quix', 1);
+            
+            $this->debug('Cache cleared successfully');
+            return $this->output($this->getResultObj('Cache cleared successfully', true, 'success'));
+        } catch (\Exception $e) {
+            $this->debug('Error clearing cache', $e->getMessage());
+            return $this->output($this->getResultObj('Error clearing cache: ' . $e->getMessage(), false, 'error'));
         }
-
-        return $this->output($this->getResultObj(JText::_('COM_IQUIX_INSTALLATION_CACHECLEAN_SUCCESS'), true));
-
     }
 
+    /**
+     * Clean cache for specific extension
+     *
+     * @param string $group
+     * @param int $client_id
+     * @return bool
+     */
     public function cachecleaner($group = 'com_quix', $client_id = 0)
     {
-        $conf = \JFactory::getConfig();
-
-        $options = array(
-            'defaultgroup' => $group,
-            'cachebase'    => $client_id ? JPATH_ADMINISTRATOR.'/cache' : $conf->get('cache_path', JPATH_SITE.'/cache'),
-            'result'       => true,
-        );
-
+        $conf = Factory::getConfig();
+        
         try {
-            /** @var \JCacheControllerCallback $cache */
-            $cache = \JCache::getInstance('callback', $options);
-            $cache->clean();
-        } catch (\JCacheException $exception) {
-            $options['result'] = false;
-        }
+            $options = [
+                'defaultgroup' => $group,
+                'cachebase' => ($client_id) ? JPATH_ADMINISTRATOR . '/cache' : $conf->get('cache_path', JPATH_SITE . '/cache'),
+                'result' => true,
+            ];
 
-        // Trigger the onContentCleanCache event.
-        // \JEventDispatcher::getInstance()->trigger('onContentCleanCache', $options);
-        JFactory::getApplication()->triggerEvent('onContentCleanCache', $options);
+            $cache = Factory::getCache($group, '');
+            $cache->clean();
+            
+            $this->debug("Cache cleaned for group $group, client_id $client_id");
+            return true;
+        } catch (\Exception $e) {
+            $this->debug("Error cleaning cache for group $group", $e->getMessage());
+            return false;
+        }
     }
 
+    /**
+     * Check if package extension exists
+     *
+     * @return void
+     */
     public function checkPackageExtension()
     {
-        $db = JFactory::getDBO();
-        // Update installed version
-        $query = "SELECT * FROM `#__extensions` WHERE `name` = 'pkg_quix' and `type` = 'package'";
-        $db->setQuery($query);
-        $result = $db->loadObject();
-
-        if ($result->extension_id) {
-            if (JDEBUG) {
-                \JLog::add("iQuix - Only Updates, No need to update PKG information", JLog::INFO, 'iquix');
-            }
-
-            return true;
-        } else {
-            $newVersion = $this->getInstallableVersion();
-
-            $manifest = '{"name":"pkg_quix","type":"package","creationDate":"2017-07-16","author":"ThemeXpert","copyright":"(C) 2010 - 2016 ThemeXpert. All rights reserved.","authorEmail":"info@themexpert.com","authorUrl":"www.themexpert.com","version":"'.$newVersion.'","description":"PKG_QUIX_XML_DESCRIPTION","group":"","filename":"pkg_quix"}';
-
-            // new installation, add pkg_quix
-            $obj                 = new stdClass();
-            $obj->extension_id   = '';
-            $obj->package_id     = 0;
-            $obj->name           = 'pkg_quix';
-            $obj->type           = 'package';
-            $obj->element        = 'pkg_quix';
-            $obj->enabled        = 1;
-            $obj->access         = 1;
-            $obj->manifest_cache = $manifest;
-            $obj->params         = '{}';
-
-            // Insert the object into the user profile table.
-            $result = JFactory::getDbo()->insertObject('#__extensions', $obj);
-
-            if (JDEBUG) {
-                \JLog::add("iQuix - updated pkg_quix information with status:".$result, JLog::DEBUG, 'iquix');
-            }
-
-            if ($result) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-    }
-
-    public function backupDatabase()
-    {
-        $getPackage = $this->checkPackageExtension();
-        if ( ! $getPackage) {
-
-            if (JDEBUG) {
-                \JLog::add("iQuix - backupDatabase failed! ".JText::_('Parent package failed to detect!'), JLog::ERROR, 'iquix');
-            }
-
-            return $this->output($this->getResultObj(JText::_('Parent package failed to detect!'), false));
-        }
-
-        $getComponent = \JComponentHelper::getComponent('com_quix');
-        if (empty($getComponent->id) or ! $getComponent->id) {
-
-            if (JDEBUG) {
-                \JLog::add("iQuix - New Installation, No need backup", JLog::DEBUG, 'iquix');
-            }
-
-            return $this->output($this->getResultObj(JText::_('New installation'), true));
-        }
-
-        $version     = $this->getPreviousVersion();
-        $versionText = str_replace(".", "", $version);
-
-        $app    = JFactory::getApplication();
-        $prefix = $app->get('dbprefix');
-
-        $db     = JFactory::getDbo();
-        $tables = JFactory::getDbo()->getTableList();
-
-        if ( ! in_array($prefix.'quix', $tables)) {
-
-            if (JDEBUG) {
-                \JLog::add("iQuix - Database empty, No need backup", JLog::DEBUG, 'iquix');
-            }
-
-            return $this->output($this->getResultObj(JText::_('No record to backup!'), true));
-        }
-
         try {
-            $tables    = JFactory::getDbo()->getTableList();
-            $quixTable = $prefix.'quix'.$versionText;
-            if ( ! in_array($quixTable, $tables)) {
-
-                $query = "CREATE TABLE IF NOT EXISTS `#__quix$versionText` LIKE `#__quix`;";
-                $db->setQuery($query);
-                $result = $db->execute();
-
-                $query = "INSERT `#__quix$versionText` SELECT * FROM `#__quix`;";
-                $db->setQuery($query);
-                $db->execute();
-
-                $query = "CREATE TABLE IF NOT EXISTS `#__quix_collections$versionText` LIKE `#__quix_collections`;";
-                $db->setQuery($query);
-                $db->execute();
-                $query = "INSERT `#__quix_collections$versionText` SELECT * FROM `#__quix_collections`;";
-                $db->setQuery($query);
-                $db->execute();
-
-                $query = "CREATE TABLE IF NOT EXISTS `#__quix_collection_map$versionText` LIKE `#__quix_collection_map`;";
-                $db->setQuery($query);
-                $db->execute();
-                $query = "INSERT `#__quix_collection_map$versionText` SELECT * FROM `#__quix_collection_map`;";
-                $db->setQuery($query);
-                $db->execute();
-
-                $query = "CREATE TABLE IF NOT EXISTS `#__quix_elements$versionText` LIKE `#__quix_elements`;";
-                $db->setQuery($query);
-                $db->execute();
-                $query = "INSERT `#__quix_elements$versionText` SELECT * FROM `#__quix_elements`;";
-                $db->setQuery($query);
-                $db->execute();
-
-                if (JDEBUG) {
-                    \JLog::add("iQuix - Database backup complete, name: ".$prefix.'quix'.$versionText, JLog::DEBUG, 'iquix');
-                }
-
-                return $this->output($this->getResultObj(JText::_('Database backup complete'), true));
-            } else {
-                if (JDEBUG) {
-                    \JLog::add("iQuix - No need backup, already has it. name: ".$prefix.'quix'.$versionText, JLog::DEBUG, 'iquix');
-                }
-
-                return $this->output($this->getResultObj(JText::sprintf('Version %s already has a backup', $version), true));
+            $db = Factory::getDbo();
+            $query = $db->getQuery(true)
+                ->select('*')
+                ->from($db->quoteName('#__extensions'))
+                ->where($db->quoteName('element') . ' = ' . $db->quote('pkg_quix'));
+            $db->setQuery($query);
+            $pkg = $db->loadObject();
+            
+            if (!$pkg) {
+                $this->debug('pkg_quix does not exist');
+                return $this->output($this->getResultObj('Fresh installation, continuing.', true));
             }
-
-        } catch (Exception $e) {
-            if (JDEBUG) {
-                \JLog::add("iQuix - Database update failed, due to: ".$e->getMessage(), JLog::DEBUG, 'iquix');
+            
+            // Check if com_quix exists
+            $query = $db->getQuery(true)
+                ->select('extension_id')
+                ->from($db->quoteName('#__extensions'))
+                ->where($db->quoteName('element') . ' = ' . $db->quote('com_quix'));
+            $db->setQuery($query);
+            $com = $db->loadResult();
+            
+            if (!$com) {
+                $this->debug('com_quix does not exist, but pkg_quix does - damaged installation');
+                return $this->output($this->getResultObj('The Quix installation seems to be damaged. We need to install it fresh.', false));
             }
-
-            return $this->output($this->getResultObj(JText::_('Error: '.$e->getMessage()), false));
+            
+            // Everything looks good
+            $this->debug('pkg_quix exists and valid');
+            return $this->output(
+                $this->getResultObj('Quix is already installed. Do you want to update?', true)
+            );
+        } catch (\Exception $e) {
+            $this->debug('Error checking package extension', $e->getMessage());
+            return $this->output($this->getResultObj('Error checking installation status: ' . $e->getMessage(), false, 'error'));
         }
     }
 

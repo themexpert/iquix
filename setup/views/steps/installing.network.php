@@ -26,6 +26,7 @@ defined('_JEXEC') or die('Unauthorized Access');
 		</div>
 	</div>
 
+
 	<div class="card" data-install-progress>
 
 		<div class="card-header">

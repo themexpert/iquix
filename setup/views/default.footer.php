@@ -1,7 +1,7 @@
 <?php
 /**
 * @package		Quix
-* @copyright	Copyright (C) 2010 - 2017 ThemeXpert.com. All rights reserved.
+* @copyright	Copyright (C) 2010 - 2023 ThemeXpert.com. All rights reserved.
 * @license		GNU/GPL, see LICENSE.php
 * Quix is free software. This version may have been modified pursuant
 * to the GNU General Public License, and as distributed it includes or
@@ -72,7 +72,17 @@ $(document).ready( function(){
 			</b>
 		</a>
 
-		<a href="javascript:void(0);" class="btn btn-primary" data-installation-submit>
+		<div>
+			<!-- Debug log download button -->
+			<a href="javascript:void(0);" id="debug" data-installation-debug class="btn btn-sm">
+				<b>
+					<span>
+						<i class="qx-icon icon-download mr-1"></i>
+					</span>
+					<span><?php echo JText::_('Download Debug Log'); ?></span>
+				</b>
+			</a>
+			<a href="javascript:void(0);" class="btn btn-primary" data-installation-submit>
 			<b>
 				<span><?php echo JText::_('Next'); ?></span>
 				<span>
@@ -80,6 +90,8 @@ $(document).ready( function(){
 				</span>
 			</b>
 		</a>
+
+		</div>
 
 		<a href="javascript:void(0);" class="col-cell loading d-none disabled" data-installation-loading>
 			<b>
@@ -111,7 +123,19 @@ $(document).ready( function(){
 <?php } ?>
 
 <?php if ($active == 'complete') { ?>
-	<a class="btn btn-primary btn-block" href="<?php echo JURI::root();?>administrator/index.php?option=com_quix">
-		<b><span><?php echo JText::_('Start Building 👋🏻');?></span></b>
-	</a>
+	<div class="d-flex justify-content-between align-items-center">
+		<!-- Debug log download button shown on completion page too -->
+		<a href="javascript:void(0);" id="debug" data-installation-debug class="btn btn-sm">
+			<b>
+				<span>
+					<i class="qx-icon icon-download mr-1"></i>
+				</span>
+				<span><?php echo JText::_('Download Debug Log'); ?></span>
+			</b>
+		</a>
+
+		<a class="btn btn-primary" href="<?php echo JURI::root();?>administrator/index.php?option=com_quix">
+			<b><span><?php echo JText::_('Start Building 👋🏻');?></span></b>
+		</a>
+	</div>
 <?php } ?>

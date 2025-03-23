@@ -1,7 +1,7 @@
 <?php
 /**
  * @package        Quix
- * @copyright      Copyright (C) 2010 - 2017 ThemeXpert.com. All rights reserved.
+ * @copyright      Copyright (C) 2010 - 2023 ThemeXpert.com. All rights reserved.
  * @license        GNU/GPL, see LICENSE.php
  * Quix is free software. This version may have been modified pursuant
  * to the GNU General Public License, and as distributed it includes or
@@ -11,6 +11,26 @@
  */
 defined('_JEXEC') or die('Unauthorized Access');
 
+// Joomla 3 compatibility layer
+if (!defined('JPATH_COMPONENT_ADMINISTRATOR')) {
+    define('JPATH_COMPONENT_ADMINISTRATOR', JPATH_ADMINISTRATOR . '/components/com_iquix');
+}
+
+// Import namespaced classes for Joomla 4 and 5 compatibility
+use Joomla\CMS\Factory;
+use Joomla\CMS\Filesystem\File;
+use Joomla\CMS\Filesystem\Folder;
+use Joomla\CMS\Uri\Uri;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Session\Session;
+use Joomla\CMS\Log\Log;
+use Joomla\CMS\Http\HttpFactory;
+use Joomla\Registry\Registry;
+use Joomla\CMS\Application\ApplicationHelper;
+use Joomla\CMS\Installer\Installer;
+use Joomla\CMS\Version;
+
+// For backward compatibility with Joomla 3
 jimport('joomla.filesystem.folder');
 jimport('joomla.filesystem.file');
 jimport('joomla.filesystem.archive');
@@ -19,17 +39,80 @@ jimport('joomla.installer.helper');
 
 class iQuixSetupController
 {
-    private $result = array();
+    /**
+     * @var array
+     */
+    private $result = [];
 
+    /**
+     * @var \Joomla\CMS\Application\CMSApplication
+     */
+    protected $app;
+    
+    /**
+     * @var \Joomla\Input\Input
+     */
+    protected $input;
+
+    /**
+     * Constructor
+     */
     public function __construct()
     {
-        $this->app   = JFactory::getApplication();
+        $this->app   = Factory::getApplication();
         $this->input = $this->app->input;
+        
+        // Initialize debug logging
+        if ($this->isDebugEnabled()) {
+            $this->initDebugLogging();
+        }
     }
 
+    /**
+     * Check if debug is enabled
+     * 
+     * @return bool
+     */
+    protected function isDebugEnabled()
+    {
+        return defined('JDEBUG') && JDEBUG;
+    }
+    
+    /**
+     * Initialize debug logging
+     */
+    protected function initDebugLogging()
+    {
+        Log::addLogger(['text_file' => 'iquix.log.php'], Log::ALL, ['iquix']);
+        $this->debug('Initialized debug logging');
+    }
+    
+    /**
+     * Add debug log entry
+     * 
+     * @param string $message
+     * @param mixed $data Optional data to include in log
+     */
+    protected function debug($message, $data = null)
+    {
+        if ($this->isDebugEnabled()) {
+            $logMessage = "iQuix - " . $message;
+            if ($data !== null) {
+                $logMessage .= ': ' . (is_string($data) ? $data : json_encode($data));
+            }
+            Log::add($logMessage, Log::DEBUG, 'iquix');
+        }
+    }
+
+    /**
+     * Add data to the result
+     *
+     * @param string $key
+     * @param mixed $value
+     */
     protected function data($key, $value)
     {
-        $obj       = new stdClass();
+        $obj       = new \stdClass();
         $obj->$key = $value;
 
         $this->result[] = $obj;
@@ -38,15 +121,23 @@ class iQuixSetupController
     /**
      * Renders a response with proper headers
      *
-     * @since     2.1.0
-     * @access    public
+     * @param array $data
+     * @return void
+     * @since 2.1.0
      */
-    public function output($data = array())
+    public function output($data = [])
     {
         header('Content-Type: application/json; UTF-8');
 
         if (empty($data)) {
             $data = $this->result;
+        }
+        
+        // Add debug information for AJAX responses if debug is enabled
+        if ($this->isDebugEnabled() && is_array($data)) {
+            $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+            $caller = isset($trace[1]['function']) ? $trace[1]['function'] : '';
+            $this->debug("AJAX Response from {$caller}", $data);
         }
 
         echo json_encode($data);
@@ -56,15 +147,24 @@ class iQuixSetupController
     /**
      * Generates a result object that can be json encoded
      *
-     * @since     2.1.0
-     * @access    public
+     * @param string $message
+     * @param bool $state
+     * @param string $stateMessage
+     * @return \stdClass
+     * @since 2.1.0
      */
     public function getResultObj($message, $state, $stateMessage = '')
     {
-        $obj               = new stdClass();
+        $obj               = new \stdClass();
         $obj->state        = $state;
         $obj->stateMessage = $stateMessage;
-        $obj->message      = JText::_($message);
+        
+        // Use namespaced Text for Joomla 4/5, fall back to JText for Joomla 3
+        if (class_exists('\\Joomla\\CMS\\Language\\Text')) {
+            $obj->message = Text::_($message);
+        } else {
+            $obj->message = \JText::_($message);
+        }
 
         return $obj;
     }
@@ -72,8 +172,8 @@ class iQuixSetupController
     /**
      * Get's the version of this launcher so we know which to install
      *
-     * @since     1.0
-     * @access    public
+     * @return string
+     * @since 1.0
      */
     public function getVersion()
     {
@@ -81,262 +181,352 @@ class iQuixSetupController
 
         // Get the version from the manifest file
         if (is_null($version)) {
-            $contents = file_get_contents(JPATH_ROOT.'/administrator/components/com_iquix/iquix.xml');
+            $manifestPath = JPATH_ROOT . '/administrator/components/com_iquix/iquix.xml';
+            
+            // Use File class for Joomla 4/5 compatibility
+            if (class_exists('\\Joomla\\CMS\\Filesystem\\File')) {
+                $contents = File::exists($manifestPath) ? file_get_contents($manifestPath) : '';
+            } else {
+                $contents = \JFile::exists($manifestPath) ? file_get_contents($manifestPath) : '';
+            }
+            
+            if (empty($contents)) {
+                $this->debug('Manifest file not found or empty: ' . $manifestPath);
+                return '0.0.0';
+            }
+            
             $parser   = simplexml_load_string($contents);
             $version  = $parser->xpath('version');
             $version  = (string) $version[0];
         }
 
-        if (JDEBUG) {
-            \JLog::add("iQuix - version : $version", JLog::DEBUG, 'iquix');
-        }
-
+        $this->debug("Version", $version);
         return $version;
     }
 
     /**
      * Retrieve the Joomla Version
      *
-     * @since   2.0
-     * @access  public
+     * @return string
+     * @since 2.0
      */
     public function getJoomlaVersion()
     {
-        $jVerArr  = explode('.', JVERSION);
-        $jVersion = $jVerArr[0].'.'.$jVerArr[1];
-
-        if (JDEBUG) {
-            \JLog::add("iQuix - jVersion : $jVersion", JLog::DEBUG, 'iquix');
+        // For Joomla 4 and 5, use Version class
+        if (class_exists('\\Joomla\\CMS\\Version')) {
+            $version = new Version();
+            $jVersion = $version->getShortVersion();
+        } else {
+            // Legacy method for Joomla 3
+            $jVerArr  = explode('.', JVERSION);
+            $jVersion = $jVerArr[0] . '.' . $jVerArr[1];
         }
 
+        $this->debug("Joomla Version", $jVersion);
         return $jVersion;
+    }
+
+    /**
+     * Check if current Joomla version is at least version 4
+     * 
+     * @return bool
+     */
+    protected function isJoomla4OrHigher()
+    {
+        $version = $this->getJoomlaVersion();
+        return version_compare($version, '4.0', '>=');
+    }
+
+    /**
+     * Check if current Joomla version is at least version 5
+     * 
+     * @return bool
+     */
+    protected function isJoomla5OrHigher()
+    {
+        $version = $this->getJoomlaVersion();
+        return version_compare($version, '5.0', '>=');
     }
 
     /**
      * Retrieves the current site's domain information
      *
-     * @since     2.0.9
-     * @access    public
+     * @return string
+     * @since 2.0.9
      */
     public function getDomain()
     {
         static $domain = null;
 
         if (is_null($domain)) {
-            $domain = JURI::root();
-            $domain = str_ireplace(array('http://', 'https://'), '', $domain);
+            // Use Uri class for Joomla 4/5 compatibility
+            if (class_exists('\\Joomla\\CMS\\Uri\\Uri')) {
+                $domain = Uri::root();
+            } else {
+                $domain = \JURI::root();
+            }
+            
+            $domain = str_ireplace(['http://', 'https://'], '', $domain);
             $domain = rtrim($domain, '/');
         }
 
-        if (JDEBUG) {
-            \JLog::add("iQuix - Domain : $domain", JLog::DEBUG, 'iquix');
-        }
-
+        $this->debug("Domain", $domain);
         return $domain;
     }
 
     /**
      * Retrieves the information about the latest version
      *
-     * @since     2.0.9
-     * @access    public
+     * @return object|false
+     * @since 2.0.9
      */
     public function getInfo()
     {
-        // Get the md5 hash from the server.
-        $session  = JFactory::getSession();
+        $session  = $this->isJoomla4OrHigher() ? Factory::getApplication()->getSession() : Factory::getSession();
         $username = $session->get('quix.username', '');
         $key      = $session->get('quix.key', '');
         $id       = $session->get('quix.id', '');
 
-        $url = QX_API_LICENSE.'&pid='.$id.'&username='.$username.'&key='.$key;
-        // &pid=116&username=AAA&key=AAA
+        $url = QX_API_LICENSE . '&pid=' . $id . '&username=' . $username . '&key=' . $key;
+        
+        $this->debug("Retrieving information from", $url);
 
-        if (JDEBUG) {
-            \JLog::add("iQuix - Retrieves the information from : $url", JLog::DEBUG, 'iquix');
-        }
+        try {
+            // Use Http class for Joomla 4/5 compatibility
+            if ($this->isJoomla4OrHigher()) {
+                $httpOptions = new Registry();
+                $http = HttpFactory::getHttp($httpOptions);
+                $response = $http->get($url);
+                $result = $response->body;
+            } else {
+                // Legacy method for Joomla 3
+                $resource = curl_init();
+                curl_setopt($resource, CURLOPT_URL, $url);
+                curl_setopt($resource, CURLOPT_POST, false);
+                curl_setopt($resource, CURLOPT_TIMEOUT, 120);
+                curl_setopt($resource, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($resource, CURLOPT_SSL_VERIFYPEER, false);
+                $result = curl_exec($resource);
+                curl_close($resource);
+            }
 
-        $resource = curl_init();
+            $this->debug("Server response", $result);
 
-        $version = $this->getVersion();
+            if (empty($result)) {
+                return false;
+            }
 
-        // We need to pass the api keys to the server
-        curl_setopt($resource, CURLOPT_URL, $url);
-        curl_setopt($resource, CURLOPT_POST, false);
-        // curl_setopt($resource, CURLOPT_POSTFIELDS, 'apikey=' . ES_KEY . '&from=' . $version);
-        curl_setopt($resource, CURLOPT_TIMEOUT, 120);
-        curl_setopt($resource, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($resource, CURLOPT_SSL_VERIFYPEER, false);
+            $obj = json_decode($result);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $this->debug("JSON decode error", json_last_error_msg());
+                return false;
+            }
 
-        $result = curl_exec($resource);
-
-        curl_close($resource);
-
-        if (JDEBUG) {
-            \JLog::add("iQuix - curl server response: ".$result, JLog::DEBUG, 'iquix');
-        }
-
-        if ( ! $result) {
+            return $obj;
+        } catch (\Exception $e) {
+            $this->debug("Error retrieving information", $e->getMessage());
             return false;
         }
-
-        $obj = json_decode($result);
-
-        return $obj;
     }
 
+    /**
+     * Get authentication info from database
+     *
+     * @return void
+     */
     public function getAuthInfo()
     {
-        $db    = JFactory::getDbo();
+        $db = Factory::getDbo();
         $query = $db->getQuery(true);
         $query->select('*')->from('#__quix_configs');
         $db->setQuery($query);
-        $result = $db->loadObjectList();
-
-        if (JDEBUG) {
-            \JLog::add("iQuix - userInfo: ".json_encode($result), JLog::DEBUG, 'iquix');
+        
+        try {
+            $result = $db->loadObjectList();
+            $this->debug("User info", $result);
+            return $this->output($result);
+        } catch (\Exception $e) {
+            $this->debug("Error getting auth info", $e->getMessage());
+            return $this->output($this->getResultObj("Error retrieving authentication info: " . $e->getMessage(), false, 'error'));
         }
-
-        return $this->output($result);
     }
 
     /**
-     * Loads the previous version that was installed
+     * Loads the installed version of Quix
      *
-     * @since     1.0
-     * @access    public
+     * @return string
+     * @since 1.0
      */
     public function getInstalledVersion()
     {
-        $xml = new SimpleXMLElement(file_get_contents(JPATH_ADMINISTRATOR.'/components/com_quix/quix.xml'));
-
-        $version = (string) $xml->version;
-
-        if (JDEBUG) {
-            \JLog::add("iQuix - NEW COM_QUIX version:".$version, JLog::INFO, 'iquix');
+        $manifestPath = JPATH_ADMINISTRATOR . '/components/com_quix/quix.xml';
+        
+        if (!file_exists($manifestPath)) {
+            $this->debug("Manifest file does not exist", $manifestPath);
+            return '0.0.0';
         }
-
-        return $version;
+        
+        try {
+            $xml = new \SimpleXMLElement(file_get_contents($manifestPath));
+            $version = (string) $xml->version;
+            $this->debug("COM_QUIX version", $version);
+            return $version;
+        } catch (\Exception $e) {
+            $this->debug("Error reading installed version", $e->getMessage());
+            return '0.0.0';
+        }
     }
 
     /**
-     * get a configuration item
+     * Get previous installed version
      *
-     * @since     1.0
-     * @access    public
+     * @return string
+     * @since 1.0
      */
     public function getPreviousVersion()
     {
-        $xml     = new SimpleXMLElement(file_get_contents(JPATH_ADMINISTRATOR.'/components/com_quix/quix.xml'));
-        $version = (string) $xml->version;
-
-        if (JDEBUG) {
-            \JLog::add("iQuix - OLD COM_QUIX version:".$version, JLog::INFO, 'iquix');
-        }
-
-        return $version;
-
+        return $this->getInstalledVersion();
     }
 
     /**
      * Determines if we are in development mode
      *
-     * @since     1.2
-     * @access    public
+     * @return bool
+     * @since 1.2
      */
     public function isDevelopment()
     {
-        $session   = JFactory::getSession();
+        $session = $this->isJoomla4OrHigher() ? Factory::getApplication()->getSession() : Factory::getSession();
         $developer = $session->get('quix.developer');
-
         return $developer;
     }
 
     /**
      * Verifies the api key
      *
-     * @since     2.1.0
-     * @access    public
+     * @param string $username
+     * @param string $key
+     * @return mixed
+     * @since 2.1.0
      */
     public function verifyApiKey($username, $key)
     {
-        $url = QX_API_LICENSE.'&catid='.QX_CATID.'&username='.$username.'&key='.$key;
-        // $post = array('username' => $username, 'key' => $key);
-        if (JDEBUG) {
-            \JLog::add("iQuix - authAPI Url : ".$url, JLog::DEBUG, 'iquix');
-        }
+        $url = QX_API_LICENSE . '&catid=' . QX_CATID . '&username=' . $username . '&key=' . $key;
+        $this->debug("API Auth URL", $url);
 
-        $httpOption = new JRegistry;
-        $http       = JHttpFactory::getHttp($httpOption);
-        $str        = $http->get($url);
-        if ($str->code != 200 && $str->code != 310) {
+        try {
+            // Use Http class for Joomla 4/5 compatibility
+            if ($this->isJoomla4OrHigher()) {
+                $httpOptions = new Registry();
+                $http = HttpFactory::getHttp($httpOptions);
+                $response = $http->get($url);
+                
+                if ($response->code != 200 && $response->code != 310) {
+                    $this->debug("API Auth failed with code", $response->code);
+                    return false;
+                }
+                
+                $result = json_decode($response->body);
+            } else {
+                // Legacy method for Joomla 3
+                $httpOption = new Registry();
+                $http = HttpFactory::getHttp($httpOption);
+                $str = $http->get($url);
+                
+                if ($str->code != 200 && $str->code != 310) {
+                    $this->debug("API Auth failed with code", $str->code);
+                    return false;
+                }
+                
+                $result = json_decode($str->body);
+            }
+            
+            $this->debug("API Auth result", $result);
+            return $result;
+        } catch (\Exception $e) {
+            $this->debug("API Auth error", $e->getMessage());
             return false;
         }
-
-        if (JDEBUG) {
-            \JLog::add("iQuix - Verifying authAPI:".$str->body, JLog::DEBUG, 'iquix');
-        }
-
-        $result = json_decode($str->body);
-
-        return $result;
     }
 
     /**
      * Retrieves the extension id
      *
-     * @since     2.0.10
-     * @access    public
+     * @param string $ext
+     * @return int|null
+     * @since 2.0.10
      */
     public function getExtensionId($ext = 'pkg_quix')
     {
-        //SELECT * FROM `fl6j4_extensions` WHERE `element` LIKE 'pkg_quix'
-        $db  = JFactory::getDBO();
-        $sql = "SELECT * FROM ".$db->quoteName('#__extensions')." WHERE ".$db->quoteName('element')." = ".$db->quote('pkg_quix');
-        $db->setQuery($sql);
-
-        // Get the extension id
-        $extensionId = $db->loadResult();
-
-        if (JDEBUG) {
-            \JLog::add("iQuix - pkg_quix Info:".json_encode($extensionId), JLog::DEBUG, 'iquix');
+        try {
+            $db = Factory::getDbo();
+            $query = $db->getQuery(true)
+                ->select('extension_id')
+                ->from($db->quoteName('#__extensions'))
+                ->where($db->quoteName('element') . ' = ' . $db->quote($ext));
+            $db->setQuery($query);
+            
+            $extensionId = $db->loadResult();
+            $this->debug("{$ext} extension ID", $extensionId);
+            
+            return $extensionId;
+        } catch (\Exception $e) {
+            $this->debug("Error getting extension ID", $e->getMessage());
+            return null;
         }
-
-        return $extensionId;
     }
 
     /**
      * Retrieves the information about the latest version
-     * url: com_iquix&task=getReleaseInfo&controller=license&ajax=1
      *
-     * @since     2.0.9
-     * @access    public
+     * @return string|false
+     * @since 2.0.9
      */
     public function getReleaseInfo()
     {
-        $session  = JFactory::getSession();
+        $session = $this->isJoomla4OrHigher() ? Factory::getApplication()->getSession() : Factory::getSession();
         $username = $session->get('quix.username', '');
-        $key      = $session->get('quix.key', '');
-        $id       = $session->get('quix.id', '');
+        $key = $session->get('quix.key', '');
+        $id = $session->get('quix.id', '');
 
-        if ( ! $id) {
+        if (empty($id)) {
+            $this->debug("No product ID found in session");
             return false;
         }
-        $update = new JUpdate;
-        $update->loadFromXml(QX_API_UPDATE.'&pid='.$id, JUpdater::STABILITY_STABLE);
+        
+        try {
+            // For Joomla 4/5
+            if ($this->isJoomla4OrHigher()) {
+                $updateClass = '\\Joomla\\CMS\\Updater\\Update';
+                $update = new $updateClass;
+            } else {
+                // For Joomla 3
+                $update = new \JUpdate;
+            }
+            
+            $update->loadFromXml(QX_API_UPDATE . '&pid=' . $id, \JUpdater::STABILITY_STABLE);
+            $this->debug("Release XML info", $update);
+            
+            // Handle different property access between Joomla versions
+            if ($this->isJoomla4OrHigher()) {
+                $downloadUrl = $update->get('downloadurl', []);
+                $downloadUrl = is_object($downloadUrl) && isset($downloadUrl->_data) ? $downloadUrl->_data : '';
+            } else {
+                $downloadUrl = $update->get('downloadurl')->_data ?? '';
+            }
+            
+            if (empty($downloadUrl)) {
+                $this->debug("No download URL found in update XML");
+                return false;
+            }
 
-        if (JDEBUG) {
-            \JLog::add("iQuix - release xml", JLog::DEBUG, 'iquix');
-            \JLog::add("iQuix - release xml :".json_encode($update), JLog::DEBUG, 'iquix');
-        }
-
-        $downloadUrl = $update->get('downloadurl')->_data ?? null;
-        if ( ! $downloadUrl) {
+            $downloadUrl = $downloadUrl . '&username=' . $username . '&key=' . $key;
+            $this->debug("Download URL", $downloadUrl);
+            
+            return $downloadUrl;
+        } catch (\Exception $e) {
+            $this->debug("Error getting release info", $e->getMessage());
             return false;
         }
-
-        $downloadUrl = $downloadUrl.'&username='.$username.'&key='.$key;
-
-        return $downloadUrl;
     }
 }

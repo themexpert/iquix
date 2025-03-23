@@ -11,6 +11,23 @@
 */
 defined('_JEXEC') or die('Unauthorized Access');
 
+// Function to print the icons
+function printIcon($iconType)
+{
+// Define SVG icons as variables
+	$checkmarkIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="none" d="M0 0h24v24H0z"/><path d="M9 16.2l-3.5-3.5L4 14l5 5 12-12-1.5-1.5z"/></svg>';
+	$crossIcon     = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="none" d="M0 0h24v24H0z"/><path d="M18.3 5.71L12 12l6.3 6.29-1.42 1.42L12 14.41l-6.29 6.3-1.42-1.42L10.59 12 4.29 5.71 5.71 4.29 12 10.59l6.29-6.3z"/></svg>';
+
+	if ($iconType === 'checkmark')
+	{
+		echo $checkmarkIcon;
+	}
+    elseif ($iconType === 'cross')
+	{
+		echo $crossIcon;
+	}
+}
+
 $gd = function_exists('gd_info');
 $curl = is_callable('curl_init');
 $ctype = extension_loaded('ctype');
@@ -20,12 +37,23 @@ $fileinfo = extension_loaded('fileinfo');
 //###########################################
 $db = JFactory::getDBO();
 $mysqlVersion = $db->getVersion();
+// first 3 characters of the version
+$mysqlVersion = substr($mysqlVersion, 0, 5);
 
 //###########################################
 //# PHP info
 //###########################################
 $phpVersion = phpversion();
+
 $memoryLimit = ini_get('memory_limit');
+// convert the value to MB without unit
+if (stripos($memoryLimit, 'M') !== false) {
+    list($memoryLimit) = explode('M', $memoryLimit);
+} elseif (stripos($memoryLimit, 'K') !== false) {
+    list($memoryLimit) = explode('K', $memoryLimit);
+    $memoryLimit = $memoryLimit / 1024;
+}
+
 $postSize = (int) ini_get('post_max_size');
 $max_execution = ini_get('max_execution_time');
 $allow_url_fopen = ini_get('allow_url_fopen');
@@ -138,9 +166,13 @@ foreach ($files as $file) {
 </div>
 
 <div class="text-center mb-3">
-	<h2>Requirements</h2>
+	<h2>Quix Auto Installer</h2>
+    <p class="text-muted mt-3 text-center">
+        Quix Installer - v#<strong><?php echo IQX_VERSION; ?></strong>
+    </p>
 </div>
 
+<h5>Requirements</h5>
 <form name="installation" method="post" data-installation-form>
 	<?php if (!$hasErrors) { ?>
 	<p class="alert alert-success">👍 Awesome! The minimum requirements are met. You may proceed with the installation
@@ -150,10 +182,6 @@ foreach ($files as $file) {
 	<p class="alert alert-danger <?php echo $hasErrors ? '' : 'd-none';?>"
 		data-requirements-error>
 		Some of the requirements below are not met. Please ensure that all of the requirements below are met.
-	</p>
-
-	<p class="alert alert-primary small text-muted mt-3">
-		<strong>New</strong> License validation updated.
 	</p>
 
 	<div class="card requirements-table" data-system-requirements>
@@ -225,16 +253,16 @@ foreach ($files as $file) {
 									</div>
 								</td>
 								<td class="text-center text-success">
-									<i class="icon-checkmark"></i>
+                                    <?php printIcon('checkmark'); ?>
 								</td>
 								<?php if ($gd) { ?>
 								<td class="text-center text-success">
-									<i class="icon-checkmark"></i>
-								</td>
+									<?php printIcon('checkmark'); ?>
+                                </td>
 								<?php } else { ?>
 								<td class="text-center text-error">
-									<i class="icon-cancel-2"></i>
-								</td>
+									<?php echo printIcon('cross'); ?>
+                                </td>
 								<?php } ?>
 							</tr>
 
@@ -253,15 +281,15 @@ foreach ($files as $file) {
 									</div>
 								</td>
 								<td class="text-center text-success">
-									<i class="icon-checkmark"></i>
+									<?php printIcon('checkmark'); ?>
 								</td>
 								<?php if ($curl) { ?>
 								<td class="text-center text-success">
-									<i class="icon-checkmark"></i>
+									<?php printIcon('checkmark'); ?>
 								</td>
 								<?php } else { ?>
 								<td class="text-center text-error">
-									<i class="icon-cancel-2"></i>
+									<?php printIcon('cross'); ?>
 								</td>
 								<?php } ?>
 							</tr>
@@ -281,14 +309,14 @@ foreach ($files as $file) {
 									</div>
 								</td>
 								<td class="text-center text-success">
-									<i class="icon-checkmark"></i>
+									<?php printIcon('checkmark'); ?>
 								</td>
 								<td
 									class="text-center text-<?php echo $ctype ? 'success' : 'error';?>">
 									<?php if (!$ctype) { ?>
-									<i class="icon-cancel-2"></i>
+									<?php printIcon('cross'); ?>
 									<?php } else { ?>
-									<i class="icon-checkmark"></i>
+									<?php printIcon('checkmark'); ?>
 									<?php } ?>
 								</td>
 							</tr>
@@ -302,14 +330,14 @@ foreach ($files as $file) {
 										title="<?php echo JText::_('COM_QUIX_INSTALLATION_FILEINFO_TIPS');?>"></i>
 								</td>
 								<td class="text-center text-success">
-									<i class="icon-checkmark"></i>
+									<?php printIcon('checkmark'); ?>
 								</td>
 								<td
 									class="text-center text-<?php echo !$fileinfo ? 'error' : 'success'; ?>">
 									<?php if (!$fileinfo) { ?>
-									<i class="icon-cancel-2"></i>
+									<?php printIcon('cross'); ?>
 									<?php } else { ?>
-									<i class="icon-checkmark"></i>
+									<?php printIcon('checkmark'); ?>
 									<?php } ?>
 								</td>
 							</tr>
@@ -325,14 +353,14 @@ foreach ($files as $file) {
 									</div>
 								</td>
 								<td class="text-center text-success">
-									<i class="icon-checkmark"></i>
+									<?php printIcon('checkmark'); ?>
 								</td>
 								<td
 									class="text-center text-<?php echo !$allow_url_fopen ? 'error' : 'success';?>">
 									<?php if (!$allow_url_fopen) { ?>
-									<i class="icon-cancel-2"></i>
+									<?php printIcon('cross'); ?>
 									<?php } else { ?>
-									<i class="icon-checkmark"></i>
+									<?php printIcon('checkmark'); ?>
 									<?php } ?>
 								</td>
 							</tr>
@@ -427,11 +455,11 @@ foreach ($files as $file) {
 
 								<?php if ($file->writable) { ?>
 								<td class="text-center text-success">
-									<i class="icon-checkmark"></i>
+									<?php printIcon('checkmark'); ?>
 								</td>
 								<?php } else { ?>
 								<td class="text-center text-error">
-									<i class="icon-cancel-2"></i>&nbsp; <?php echo JText::_('Unwritable');?>
+									<?php printIcon('cross'); ?>&nbsp; <?php echo JText::_('Unwritable');?>
 								</td>
 								<?php } ?>
 							</tr>
@@ -448,9 +476,6 @@ foreach ($files as $file) {
 		Need help about requirements? You might want check <a
 			href="https://www.themexpert.com/docs/quix-builder/basics/requirements" target="_blank">this link</a> or our
 		<a href="https://www.themexpert.com/docs" target="_blank">Docs Home</a>.
-	</p>
-	<p class="alert alert-info small text-muted mt-3">
-		<strong>New</strong> License validation updated.
 	</p>
 
 

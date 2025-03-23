@@ -73,7 +73,7 @@ $(document).ready(function() {
 				loading.addClass('d-none');
 
 				// User is not allowed to install
-				if (result.state == 400 || result.state == 403) {
+				if (!result.state == 400 || result.state == false) {
 
 					// Set the error message
 					$('[data-api-errors]').removeClass('d-none');
@@ -83,7 +83,7 @@ $(document).ready(function() {
 
 
 				// Valid licenses
-				if (result.state == 200) {
+				if (result.state) {
 
 					submit.removeClass('d-none');
 					licenses.append(result.html);

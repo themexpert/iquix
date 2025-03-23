@@ -16,11 +16,11 @@ defined('_JEXEC') or die('Unauthorized Access');
 	<span class="progress-state text-info float-right">Waiting</span>
 	<div class="notes"></div>
 </li>
-<li class="list-group-item pending" data-progress-backup>
-	<b class="split__title">Backup Database</b>
-	<span class="progress-state text-info float-right">Waiting</span>
-	<div class="notes"></div>
-</li>
+<!--<li class="list-group-item pending" data-progress-backup>-->
+<!--	<b class="split__title">Backup Database</b>-->
+<!--	<span class="progress-state text-info float-right">Waiting</span>-->
+<!--	<div class="notes"></div>-->
+<!--</li>-->
 <li class="list-group-item pending" data-progress-component>
 	<b class="split__title">Initializing Component</b>
 	<span class="progress-state text-info float-right">Waiting</span>

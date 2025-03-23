@@ -1,4 +1,3 @@
-
 var qx = {
 	ajaxUrl: "index.php?option=com_iquix&ajax=1",
 	installation: {
@@ -50,7 +49,9 @@ var qx = {
 					return false;
 				}
 
-				qx.installation.backupDatabase();
+				// qx.installation.backupDatabase();
+				// 	Move to the next step
+				qx.installation.installComponent();
 			});
 		},
 
@@ -403,3 +404,34 @@ var qx = {
 		},
 	}
 }
+
+/**
+ * Download debug log functionality
+ */
+qx.debug = {
+	/**
+	 * Initialize debug log download functionality
+	 * @returns {void}
+	 */
+	init: function() {
+		$(document).on('click', '#debug[data-installation-debug]', function(e) {
+			e.preventDefault();
+			qx.debug.downloadLog();
+		});
+	},
+
+	/**
+	 * Download the debug log file directly
+	 * @returns {void}
+	 */
+	downloadLog: function() {
+		// Create a download link and navigate directly to file download URL
+		window.location.href = qx.ajaxUrl + "&controller=license&task=downloadDebugLog";
+	}
+}
+
+// Initialize debug functionality when document is ready
+$(document).ready(function() {
+	// Initialize debug log download
+	qx.debug.init();
+});
