@@ -40,3 +40,6 @@ releases/
 !.gitignore
 !index.html
 !index.php
+
+setup/packages
+setup/tmp

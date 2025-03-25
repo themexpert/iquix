@@ -835,7 +835,8 @@ class iQuixControllerInstallation extends iQuixSetupController
         $query = "SELECT * FROM `#__extensions` WHERE `name` = 'pkg_quix' and `type` = 'package'";
         $db->setQuery($query);
         $result = $db->loadObject();
-
+        if(!$result) return;
+        
         $manifest          = json_decode($result->manifest_cache);
         $manifest->version = $version;
 
