@@ -201,17 +201,29 @@ final class Installation extends AbstractController
         }
 
         if ($failure !== '') {
-            // Deliberately not a failure. Every extension is installed and
-            // working by the time this runs; the package postflight only
-            // prepares cache directories and does licence-recheck bookkeeping
-            // that Quix repeats on the next admin page load. Failing the whole
-            // wizard here would strand the user with a working Quix behind a
-            // red error. The message is reported verbatim rather than
-            // swallowed -- a silent success here would hide a real regression
-            // in the package script.
-            $this->ok(
-                'Quix is installed, but its post-install database step was skipped: ' . $failure
-                . ' Quix repeats that work on the next admin page load, so no action is normally needed.'
+            // Not fatal to the wizard: every extension is installed and
+            // registered by now, and installPost() still has to run to remove
+            // the downloaded archive. So the run continues.
+            //
+            // But this is a warning, not an aside. pkg.script.php::postflight()
+            // runs enablePlugins(), insertMissingUcmRecords(),
+            // purgeAllQuixCache(), cleanQuixCache() and updateDBfromOLD(), in
+            // that order, before it reaches the licence and welcome-screen
+            // work at the end. Only the two cache steps repeat themselves
+            // later; enabling Quix's plugins, registering its content types
+            // and migrating legacy tables are one-shot install work with no
+            // equivalent on a normal admin page load. And a throw here carries
+            // no indication of how far it got -- a failure inside
+            // enablePlugins() looks exactly like one in renderInstallPage()
+            // after everything real had already succeeded. Tell the user to
+            // check, and never claim it will sort itself out.
+            $this->warn(
+                'Quix is installed, but its post-install setup step did not finish: '
+                . $this->asSentence($failure)
+                . ' That step also enables Quix\'s plugins, registers its content types and'
+                . ' migrates data from older versions, and none of that is repeated'
+                . ' automatically. Open Quix in the administrator to check it works, and run'
+                . ' this installer again if anything is missing.'
             );
         }
 
@@ -276,9 +288,10 @@ final class Installation extends AbstractController
         $store->setMany(['install_archive' => '', 'install_dir' => '']);
 
         if ($updateSiteError !== '') {
-            $this->ok(
-                'Installation finished, but the Quix update site could not be configured, '
-                . 'so updates may not be offered: ' . $updateSiteError
+            $this->warn(
+                'Installation finished, but the Quix update site could not be configured, so'
+                . ' Quix updates may not be offered: ' . $this->asSentence($updateSiteError)
+                . ' Check System → Update Sites in the administrator.'
             );
         }
 

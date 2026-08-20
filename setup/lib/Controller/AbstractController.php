@@ -26,9 +26,34 @@ abstract class AbstractController
         $this->send(array_merge(['state' => true, 'message' => $message], $extra));
     }
 
+    /**
+     * A step that did not stop the installation but did not do its job either.
+     *
+     * `state` stays true so the wizard moves on -- the remaining steps still
+     * have to run -- but `warning` tells the JS not to paint the row green
+     * under the word "Success". An honest message rendered as an all-clear is
+     * no better than no message.
+     */
+    protected function warn(string $message, array $extra = []): never
+    {
+        $this->send(array_merge(
+            ['state' => true, 'warning' => true, 'message' => $message],
+            $extra
+        ));
+    }
+
     protected function fail(string $message, array $extra = []): never
     {
         $this->send(array_merge(['state' => false, 'message' => $message], $extra));
+    }
+
+    /**
+     * Join an exception message onto a sentence of ours without doubling or
+     * dropping the full stop between them.
+     */
+    protected function asSentence(string $detail): string
+    {
+        return rtrim(trim($detail), '.') . '.';
     }
 
     protected function send(array $payload): never
