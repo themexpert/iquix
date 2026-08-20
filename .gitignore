@@ -41,5 +41,10 @@ releases/
 !index.html
 !index.php
 
+# Composer / PHPUnit
+/vendor/
+/.phpunit.cache/
+composer.lock
+
 setup/packages
 setup/tmp
