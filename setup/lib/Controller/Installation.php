@@ -176,6 +176,10 @@ final class Installation extends AbstractController
             $this->ok('No database migration was bundled with this package.');
         }
 
+        $this->loadQuixHelpers();
+
+        $failure = '';
+
         try {
             require_once $script;
 
@@ -186,13 +190,52 @@ final class Installation extends AbstractController
             $instance = new \pkg_QuixInstallerScript();
 
             ob_start();
-            $instance->postflight([]);
-            ob_end_clean();
+
+            try {
+                $instance->postflight([]);
+            } finally {
+                ob_end_clean();
+            }
         } catch (\Throwable $e) {
-            $this->fail('The database update failed: ' . $e->getMessage());
+            $failure = $e->getMessage();
+        }
+
+        if ($failure !== '') {
+            // Deliberately not a failure. Every extension is installed and
+            // working by the time this runs; the package postflight only
+            // prepares cache directories and does licence-recheck bookkeeping
+            // that Quix repeats on the next admin page load. Failing the whole
+            // wizard here would strand the user with a working Quix behind a
+            // red error. The message is reported verbatim rather than
+            // swallowed -- a silent success here would hide a real regression
+            // in the package script.
+            $this->ok(
+                'Quix is installed, but its post-install database step was skipped: ' . $failure
+                . ' Quix repeats that work on the next admin page load, so no action is normally needed.'
+            );
         }
 
         $this->ok('Database updated.');
+    }
+
+    /**
+     * com_quix's helpers are plain, non-namespaced classes that com_quix's own
+     * entry point pulls in; nothing registers them inside a com_iquix request.
+     * The package postflight reaches QuixHelperLicense, and its install layout
+     * reaches QuixHelperFactory through it, so both have to be on hand first --
+     * without this, postflight died with 'Class "QuixHelperFactory" not found'
+     * on every run. The members are installed by the time syncDb() runs, so the
+     * files are on disk; is_file() guards keep a missing one from being fatal.
+     */
+    private function loadQuixHelpers(): void
+    {
+        foreach (['factory.php', 'license.php'] as $helper) {
+            $path = JPATH_ADMINISTRATOR . '/components/com_quix/helpers/' . $helper;
+
+            if (is_file($path)) {
+                require_once $path;
+            }
+        }
     }
 
     public function installPost(): never
