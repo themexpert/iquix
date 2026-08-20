@@ -23,7 +23,6 @@ defined('_JEXEC') or die('Unauthorized Access');
 	<link href="<?php echo QX_SETUP_URL;?>/assets/images/quix-logo.png" rel="shortcut icon" type="image/vnd.microsoft.icon"/>
 
 	<link rel="stylesheet" href="<?php echo QX_SETUP_URL;?>/assets/styles/bootstrap.min.css">
-	<link type="text/css" href="<?php echo \Joomla\CMS\Uri\Uri::root(true);?>/media/jui/css/icomoon.css" rel="stylesheet" />
 
 	<link type="text/css" href="<?php echo QX_SETUP_URL;?>/assets/styles/style.css" rel="stylesheet" />
 
