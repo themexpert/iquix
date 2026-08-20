@@ -35,7 +35,7 @@ $fileinfo = extension_loaded('fileinfo');
 //###########################################
 //# MySQL info
 //###########################################
-$db = JFactory::getDBO();
+$db = \Joomla\CMS\Factory::getDbo();
 $mysqlVersion = $db->getVersion();
 // first 3 characters of the version
 $mysqlVersion = substr($mysqlVersion, 0, 5);
@@ -121,13 +121,13 @@ $files['cache']->path = JPATH_ROOT . '/cache';
 foreach ($files as $file) {
     // The only proper way to test this is to not use is_writable
     $contents = '<body></body>';
-    $state = JFile::write($file->path . '/tmp.html', $contents);
+    $state = \Joomla\Filesystem\File::write($file->path . '/tmp.html', $contents);
 
     // Initialize this to false by default
     $file->writable = false;
 
     if ($state) {
-        JFile::delete($file->path . '/tmp.html');
+        \Joomla\Filesystem\File::delete($file->path . '/tmp.html');
 
         $file->writable = true;
     }
@@ -202,13 +202,13 @@ foreach ($files as $file) {
 						<thead>
 							<tr>
 								<td width="40%">
-									<?php echo JText::_('Settings');?>
+									<?php echo \Joomla\CMS\Language\Text::_('Settings');?>
 								</td>
 								<td class="text-center" width="30%">
-									<?php echo JText::_('Recommended');?>
+									<?php echo \Joomla\CMS\Language\Text::_('Recommended');?>
 								</td>
 								<td class="text-center" width="30%">
-									<?php echo JText::_('Current');?>
+									<?php echo \Joomla\CMS\Language\Text::_('Current');?>
 								</td>
 							</tr>
 						</thead>
@@ -218,14 +218,14 @@ foreach ($files as $file) {
 								class="<?php echo version_compare($phpVersion, '5.6.0') == -1 ? 'text-error' : '';?>">
 								<td>
 									<div class="clearfix">
-										<span class="label label-info"><?php echo JText::_('PHP');?></span>
+										<span class="label label-info"><?php echo \Joomla\CMS\Language\Text::_('PHP');?></span>
 										Version
 										<i class="icon-help hasTooltip"
-											title="<?php echo JText::_('COM_QUIX_INSTALLATION_PHP_VERSION_TIPS');?>"></i>
+											title="<?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_PHP_VERSION_TIPS');?>"></i>
 
 										<?php if (false == true) { //(version_compare($phpVersion, '5.6.0') == -1) {?>
 										<a href="https://themexpert.com/docs/quix/welcome/getting-started"
-											class="pull-right btn btn-es-danger btn-mini"><?php echo JText::_('COM_QUIX_INSTALLATION_FIX_THIS');?></a>
+											class="pull-right btn btn-es-danger btn-mini"><?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_FIX_THIS');?></a>
 										<?php } ?>
 									</div>
 								</td>
@@ -241,14 +241,14 @@ foreach ($files as $file) {
 								class="<?php echo !$gd ? 'text-error' : '';?>">
 								<td>
 									<div class="clearfix">
-										<span class="label label-info"><?php echo JText::_('PHP');?></span>
+										<span class="label label-info"><?php echo \Joomla\CMS\Language\Text::_('PHP');?></span>
 										GD Library
 										<i class="icon-help hasTooltip"
-											title="<?php echo JText::_('COM_QUIX_INSTALLATION_PHP_GD_TIPS');?>"></i>
+											title="<?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_PHP_GD_TIPS');?>"></i>
 
 										<?php if (false == true) { //( !$gd ){?>
 										<a href="https://themexpert.com/docs/quix/setup/gd-library" target="_blank"
-											class="pull-right btn btn-es-danger btn-mini"><?php echo JText::_('COM_QUIX_INSTALLATION_FIX_THIS');?></a>
+											class="pull-right btn btn-es-danger btn-mini"><?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_FIX_THIS');?></a>
 										<?php } ?>
 									</div>
 								</td>
@@ -270,13 +270,13 @@ foreach ($files as $file) {
 								class="<?php echo !$curl ? 'text-error' : '';?>">
 								<td>
 									<div class="clearfix">
-										<span class="label label-info"><?php echo JText::_('PHP');?></span>
+										<span class="label label-info"><?php echo \Joomla\CMS\Language\Text::_('PHP');?></span>
 										CURL Library
 										<i class="icon-help hasTooltip"
-											title="<?php echo JText::_('COM_QUIX_INSTALLATION_PHP_CURL_TIPS');?>"></i>
+											title="<?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_PHP_CURL_TIPS');?>"></i>
 										<?php if (false == true) { //( !$curl ){?>
 										<a href="https://themexpert.com/docs/quix/setup/curl-library" target="_blank"
-											class="pull-right btn btn-es-danger btn-mini"><?php echo JText::_('COM_QUIX_INSTALLATION_FIX_THIS');?></a>
+											class="pull-right btn btn-es-danger btn-mini"><?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_FIX_THIS');?></a>
 										<?php } ?>
 									</div>
 								</td>
@@ -297,14 +297,14 @@ foreach ($files as $file) {
 								class="<?php echo $ctype ? '' : 'text-error';?>">
 								<td>
 									<div class="clearfix">
-										<span class="label label-info"><?php echo JText::_('PHP');?></span>
+										<span class="label label-info"><?php echo \Joomla\CMS\Language\Text::_('PHP');?></span>
 										CType Function
 										<i class="icon-help hasTooltip"
-											title="<?php echo JText::_('COM_QUIX_INSTALLATION_PHP_CTYPE_TIPS');?>"></i>
+											title="<?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_PHP_CTYPE_TIPS');?>"></i>
 
 										<?php if (false == true) { //( !$ctype ){?>
 										<a href="https://themexpert.com/docs/quix/setup/magic-quotes" target="_blank"
-											class="pull-right btn btn-es-danger btn-mini"><?php echo JText::_('COM_QUIX_INSTALLATION_FIX_THIS');?></a>
+											class="pull-right btn btn-es-danger btn-mini"><?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_FIX_THIS');?></a>
 										<?php } ?>
 									</div>
 								</td>
@@ -324,10 +324,10 @@ foreach ($files as $file) {
 							<tr
 								class="<?php echo !$fileinfo ? 'text-error' : '';?>">
 								<td>
-									<span class="label label-info"><?php echo JText::_('PHP');?></span>
+									<span class="label label-info"><?php echo \Joomla\CMS\Language\Text::_('PHP');?></span>
 									Fileinfo Support
 									<i class="icon-help hasTooltip"
-										title="<?php echo JText::_('COM_QUIX_INSTALLATION_FILEINFO_TIPS');?>"></i>
+										title="<?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_FILEINFO_TIPS');?>"></i>
 								</td>
 								<td class="text-center text-success">
 									<?php printIcon('checkmark'); ?>
@@ -346,10 +346,10 @@ foreach ($files as $file) {
 								class="<?php echo !$allow_url_fopen ? 'text-error' : '';?>">
 								<td>
 									<div class="clearfix">
-										<span class="label label-info"><?php echo JText::_('PHP');?></span>
+										<span class="label label-info"><?php echo \Joomla\CMS\Language\Text::_('PHP');?></span>
 										allow_url_fopen
 										<i class="icon-help hasTooltip"
-											title="<?php echo JText::_('COM_QUIX_INSTALLATION_ALLOW_URL_FOPEN_TIPS');?>"></i>
+											title="<?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_ALLOW_URL_FOPEN_TIPS');?>"></i>
 									</div>
 								</td>
 								<td class="text-center text-success">
@@ -367,13 +367,13 @@ foreach ($files as $file) {
 							<tr
 								class="<?php echo $memoryLimit < 64 ? 'text-error' : '';?>">
 								<td>
-									<span class="label label-info"><?php echo JText::_('PHP');?></span>
+									<span class="label label-info"><?php echo \Joomla\CMS\Language\Text::_('PHP');?></span>
 									memory_limit
 									<i class="icon-help hasTooltip"
-										title="<?php echo JText::_('COM_QUIX_INSTALLATION_PHP_MEMORYLIMIT_TIPS');?>"></i>
+										title="<?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_PHP_MEMORYLIMIT_TIPS');?>"></i>
 								</td>
 								<td class="text-center text-success">
-									128 <?php echo JText::_('M');?>
+									128 <?php echo \Joomla\CMS\Language\Text::_('M');?>
 								</td>
 								<td
 									class="text-center text-<?php echo $memoryLimit < 64 ? 'error' : 'success';?>">
@@ -383,13 +383,13 @@ foreach ($files as $file) {
 							<tr
 								class="<?php echo $postSize < 16 ? 'text-error' : '';?>">
 								<td>
-									<span class="label label-info"><?php echo JText::_('PHP');?></span>
+									<span class="label label-info"><?php echo \Joomla\CMS\Language\Text::_('PHP');?></span>
 									post_max_size
 									<i class="icon-help hasTooltip"
-										title="<?php echo JText::_('COM_QUIX_INSTALLATION_PHP_POST_MAX_SIZE_TIPS');?>"></i>
+										title="<?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_PHP_POST_MAX_SIZE_TIPS');?>"></i>
 								</td>
 								<td class="text-center text-success">
-									24 <?php echo JText::_('M');?>
+									24 <?php echo \Joomla\CMS\Language\Text::_('M');?>
 								</td>
 								<td
 									class="text-center text-<?php echo $postSize < 5 ? 'error' : 'success';?>">
@@ -399,10 +399,10 @@ foreach ($files as $file) {
 							<tr
 								class="<?php echo $max_execution < 60 ? 'text-error' : '';?>">
 								<td>
-									<span class="label label-info"><?php echo JText::_('PHP');?></span>
+									<span class="label label-info"><?php echo \Joomla\CMS\Language\Text::_('PHP');?></span>
 									max_execution_time
 									<i class="icon-help hasTooltip"
-										title="<?php echo JText::_('COM_QUIX_INSTALLATION_PHP_MAX_EXECUTION_TIPS');?>"></i>
+										title="<?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_PHP_MAX_EXECUTION_TIPS');?>"></i>
 								</td>
 								<td class="text-center text-success">
 									120
@@ -415,10 +415,10 @@ foreach ($files as $file) {
 							<tr
 								class="<?php echo !$mysqlVersion || version_compare($mysqlVersion, '5.0.4') == -1 ? 'text-error' : '';?>">
 								<td>
-									<span class="label label-info"><?php echo JText::_('MySQL');?></span>
+									<span class="label label-info"><?php echo \Joomla\CMS\Language\Text::_('MySQL');?></span>
 									Version
 									<i class="icon-help hasTooltip"
-										title="<?php echo JText::_('COM_QUIX_INSTALLATION_MYSQL_VERSION_TIPS');?>"></i>
+										title="<?php echo \Joomla\CMS\Language\Text::_('COM_QUIX_INSTALLATION_MYSQL_VERSION_TIPS');?>"></i>
 								</td>
 								<td class="text-center text-success">
 									5.0.4
@@ -437,10 +437,10 @@ foreach ($files as $file) {
 						<thead>
 							<tr>
 								<td width="75%">
-									<?php echo JText::_('Directory'); ?>
+									<?php echo \Joomla\CMS\Language\Text::_('Directory'); ?>
 								</td>
 								<td class="text-center" width="25%">
-									<?php echo JText::_('State'); ?>
+									<?php echo \Joomla\CMS\Language\Text::_('State'); ?>
 								</td>
 							</tr>
 						</thead>
@@ -459,7 +459,7 @@ foreach ($files as $file) {
 								</td>
 								<?php } else { ?>
 								<td class="text-center text-error">
-									<?php printIcon('cross'); ?>&nbsp; <?php echo JText::_('Unwritable');?>
+									<?php printIcon('cross'); ?>&nbsp; <?php echo \Joomla\CMS\Language\Text::_('Unwritable');?>
 								</td>
 								<?php } ?>
 							</tr>
@@ -485,14 +485,12 @@ foreach ($files as $file) {
 </form>
 
 <?php
-$session = JFactory::getSession();
+$session = \Joomla\CMS\Factory::getSession();
 $checkUpdate = $session->get('quix.scriptupdate', false);
 if (!$checkUpdate): ?>
 <script type="text/javascript">
 	jQuery(document).ready(function() {
 		// jQuery('[data-installation-form]').addClass('hide');
-		qx.ajaxUrl =
-			"<?php echo JURI::root();?>administrator/index.php?option=com_iquix&ajax=1";
 		// Immediately proceed with installation
 		qx.core.checkUpdate();
 	});

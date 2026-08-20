@@ -22,20 +22,23 @@ defined('_JEXEC') or die('Unauthorized Access');
 
 	<link href="<?php echo QX_SETUP_URL;?>/assets/images/quix-logo.png" rel="shortcut icon" type="image/vnd.microsoft.icon"/>
 
-	<link rel="stylesheet" href="//stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
-	<link type="text/css" href="<?php echo JURI::root(true);?>/media/jui/css/icomoon.css" rel="stylesheet" />
-
-	<link href="//fonts.googleapis.com/css?family=Poppins:300,400" rel="stylesheet">
+	<link rel="stylesheet" href="<?php echo QX_SETUP_URL;?>/assets/styles/bootstrap.min.css">
+	<link type="text/css" href="<?php echo \Joomla\CMS\Uri\Uri::root(true);?>/media/jui/css/icomoon.css" rel="stylesheet" />
 
 	<link type="text/css" href="<?php echo QX_SETUP_URL;?>/assets/styles/style.css" rel="stylesheet" />
-	
-	<script src="//code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
-	<script src="//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
-	<script src="//stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
 
-	<script type="text/javascript">jQuery(function($){ $(".hasTooltip").tooltip({"html": true,"container": "body"}); });</script>
+	<script type="text/javascript">
+		window.iquix = {
+			ajaxUrl: <?php echo json_encode(rtrim(\Joomla\CMS\Uri\Uri::root(), '/') . '/administrator/index.php?option=com_iquix'); ?>,
+			token: <?php echo json_encode(\Joomla\CMS\Session\Session::getFormToken()); ?>
+		};
+	</script>
 
-	<script src="<?php echo JURI::root(true);?>/administrator/components/com_iquix/setup/assets/scripts/script.js" type="text/javascript"></script>
+	<script src="<?php echo \Joomla\CMS\Uri\Uri::root(true);?>/media/vendor/jquery/js/jquery.min.js"></script>
+	<script src="<?php echo \Joomla\CMS\Uri\Uri::root(true);?>/media/vendor/jquery/js/jquery-noconflict.min.js"></script>
+	<script type="text/javascript">window.$ = window.$ || jQuery;</script>
+
+	<script src="<?php echo \Joomla\CMS\Uri\Uri::root(true);?>/administrator/components/com_iquix/setup/assets/scripts/script.js" type="text/javascript"></script>
 </head>
 
 <body class="step<?php echo $active;?>">

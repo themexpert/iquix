@@ -16,34 +16,9 @@ defined('_JEXEC') or die('Unauthorized Access');
 	<span class="progress-state text-info float-right">Waiting</span>
 	<div class="notes"></div>
 </li>
-<!--<li class="list-group-item pending" data-progress-backup>-->
-<!--	<b class="split__title">Backup Database</b>-->
-<!--	<span class="progress-state text-info float-right">Waiting</span>-->
-<!--	<div class="notes"></div>-->
-<!--</li>-->
-<li class="list-group-item pending" data-progress-component>
-	<b class="split__title">Initializing Component</b>
-	<span class="progress-state text-info float-right">Waiting</span>
-	<div class="notes"></div>
-</li>
-<li class="list-group-item pending" data-progress-library>
-	<b class="split__title">Initializing Library</b>
-	<span class="progress-state text-info float-right">Waiting</span>
-	<div class="notes"></div>
-</li>
-<li class="list-group-item pending" data-progress-modules>
-	<b class="split__title">Initializing Modules</b>
-	<span class="progress-state text-info float-right">Waiting</span>
-	<div class="notes"></div>
-</li>
-<li class="list-group-item pending" data-progress-plugins>
-	<b class="split__title">Initializing Plugins</b>
-	<span class="progress-state text-info float-right">Waiting</span>
-	<div class="notes"></div>
-</li>
-<li class="list-group-item pending" data-progress-templates>
-	<b class="split__title">Initializing Templates</b>
-	<span class="progress-state text-info float-right">Waiting</span>
+<li class="list-group-item pending" data-progress-extensions>
+	<b class="split__title">Installing Quix extensions...</b>
+	<span class="progress-state text-info float-right">Pending</span>
 	<div class="notes"></div>
 </li>
 <li class="list-group-item pending" data-progress-syncdb>

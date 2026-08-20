@@ -14,18 +14,18 @@ defined('_JEXEC') or die('Unauthorized Access');
 
 <?php foreach ($steps as $step) { ?>
 <div class="d-flex flex-row mb-3<?php echo $step->className;?>">
-	<span class="badge p-3 rounded-circle"><?php echo JText::sprintf('%1$s', $step->index);?></span>
+	<span class="badge p-3 rounded-circle"><?php echo \Joomla\CMS\Language\Text::sprintf('%1$s', $step->index);?></span>
 	<div class="flex-fill pl-3">
-		<h4><?php echo JText::_($step->title);?></h4>
-		<p class="text-muted"><?php echo JText::_($step->desc);?></p>
+		<h4><?php echo \Joomla\CMS\Language\Text::_($step->title);?></h4>
+		<p class="text-muted"><?php echo \Joomla\CMS\Language\Text::_($step->desc);?></p>
 	</div>
 </div>
 <?php } ?>
 
 <div class="d-flex flex-row mb-3<?php echo $active == 'complete' ? ' current' : '';?>">
-	<span class="badge p-3 rounded-circle"><?php echo JText::sprintf('%1$s', count($steps) + 1);?></span>
+	<span class="badge p-3 rounded-circle"><?php echo \Joomla\CMS\Language\Text::sprintf('%1$s', count($steps) + 1);?></span>
 	<div class="flex-fill pl-3">
-		<h4><?php echo JText::_('COM_IQUIX_INSTALLATION_COMPLETE');?></h4>
+		<h4><?php echo \Joomla\CMS\Language\Text::_('COM_IQUIX_INSTALLATION_COMPLETE');?></h4>
 		<p class="text-muted">You are ready to go</p>
 	</div>
 </div>

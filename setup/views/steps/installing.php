@@ -11,8 +11,6 @@
 */
 defined('_JEXEC') or die('Unauthorized Access');
 
-// Get installation method here
-$method = $input->get('method', '', 'default');
-$file = __DIR__ . '/installing.' . $method . '.php';
-
-include_once(__DIR__ . '/installing.' . $method . '.php');
+// Only the network installer remains. Anything else in `method` is ignored
+// rather than turned into an include path.
+include __DIR__ . '/installing.network.php';

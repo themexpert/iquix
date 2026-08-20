@@ -1,20 +1,32 @@
 var qx = {
-	ajaxUrl: "index.php?option=com_iquix&ajax=1",
+	get ajaxUrl() {
+		return window.iquix.ajaxUrl + '&ajax=1';
+	},
+
+	request: function (controller, task, properties) {
+		var data = Object.assign({ path: qx.installation.path }, properties || {});
+		data[window.iquix.token] = 1;
+
+		return $.ajax({
+			type: 'POST',
+			url: qx.ajaxUrl + '&controller=' + controller + '&task=' + task,
+			data: data
+		});
+	},
+
 	installation: {
 		path: null,
-		ajaxCall: function(task, properties, callback) {
 
-			var prop = $.extend({
-				"path": qx.installation.path
-			}, properties);
-
-			$.ajax({
-				type: "POST",
-				url: qx.ajaxUrl + "&controller=installation&task=" + task ,
-				data: prop
-			}).done(function(result) {
-				callback.apply(this, [result]);
-			});
+		ajaxCall: function (task, properties, callback) {
+			qx.request('installation', task, properties)
+				.done(function (result) { callback(result); })
+				.fail(function (jqXHR) {
+					callback({
+						state: false,
+						message: (jqXHR.responseJSON && jqXHR.responseJSON.message) ||
+							'The request failed (HTTP ' + jqXHR.status + ').'
+					});
+				});
 		},
 
 		showRetry: function(step) {
@@ -49,122 +61,26 @@ var qx = {
 					return false;
 				}
 
-				// qx.installation.backupDatabase();
 				// 	Move to the next step
-				qx.installation.installComponent();
+				qx.installation.installExtensions();
 			});
 		},
 
-		backupDatabase: function() {
-			qx.installation.setActive('data-progress-backup');
+		installExtensions: function () {
+			qx.installation.setActive('data-progress-extensions');
 
-			qx.installation.ajaxCall('backupDatabase' , {} , function(result) {
-				// Set the progress
-				qx.installation.update( 'data-progress-backup' , result , '40%');
+			qx.installation.ajaxCall('installExtensions', {}, function (result) {
+				qx.installation.update('data-progress-extensions', result, '80%');
 
 				if (!result.state) {
-					qx.installation.showRetry('backupDatabase');
-					return false;
-				}
-
-				qx.installation.installComponent();
-			});
-		},
-
-		installComponent : function() {
-			// Install the admin stuffs
-			qx.installation.setActive( 'data-progress-component' );
-
-			qx.installation.ajaxCall( 'installComponent' , {} , function( result )
-			{
-				// Set the progress
-				qx.installation.update( 'data-progress-component' , result , '50%');
-
-				if( !result.state )
-				{
-					qx.installation.showRetry( 'installComponent' );
-					return false;
-				}
-
-				qx.installation.installLibrary();
-			});
-		},
-
-		installLibrary : function() {
-			// Install the admin stuffs
-			qx.installation.setActive( 'data-progress-library' );
-
-			qx.installation.ajaxCall( 'installLibrary' , {} , function( result )
-			{
-				// Set the progress
-				qx.installation.update( 'data-progress-library' , result , '60%');
-
-				if( !result.state )
-				{
-					qx.installation.showRetry( 'installLibrary' );
-					return false;
-				}
-
-				qx.installation.installModules();
-			});
-		},
-
-
-		installModules: function() {
-			// Install the admin stuffs
-			qx.installation.setActive('data-progress-modules');
-
-			qx.installation.ajaxCall('installModules', {}, function(result) {
-				// Set the progress
-				qx.installation.update('data-progress-modules', result , '70%');
-
-				if (!result.state) {
-					qx.installation.showRetry('installModules');
-					return false;
-				}
-
-				qx.installation.installTemplates();
-			});
-		},
-
-		installTemplates: function()
-		{
-			// Install the admin stuffs
-			qx.installation.setActive( 'data-progress-plugins' );
-
-			qx.installation.ajaxCall( 'installTemplates' , {} , function( result )
-			{
-				// Set the progress
-				qx.installation.update( 'data-progress-templates' , result , '80%');
-
-				if( !result.state )
-				{
-					qx.installation.showRetry( 'installTemplates' );
-					return false;
-				}
-				
-				qx.installation.installPlugins();
-			});
-		},
-		installPlugins: function()
-		{
-			// Install the admin stuffs
-			qx.installation.setActive( 'data-progress-templates' );
-
-			qx.installation.ajaxCall( 'installPlugins' , {} , function( result )
-			{
-				// Set the progress
-				qx.installation.update( 'data-progress-plugins' , result , '90%');
-
-				if( !result.state )
-				{
-					qx.installation.showRetry( 'installPlugins' );
+					qx.installation.showRetry('installExtensions');
 					return false;
 				}
 
 				qx.installation.syncdb();
 			});
 		},
+
 		syncdb: function()
 		{
 			// Install the admin stuffs
@@ -259,10 +175,7 @@ var qx = {
 			var frame = $('[data-progress-finalizing]');
 			frame.addClass('active').removeClass('pending');
 
-			$.ajax({
-				type: 'POST',
-				url: qx.ajaxUrl + '&controller=maintenance&task=cleanInstallation&active=1'
-			})
+			qx.request('maintenance', 'cleanInstallation', {})
 			.done(function(result){
 				var stateMessage	= result.state ? 'Success' : 'Failed';
 
@@ -282,10 +195,7 @@ var qx = {
 
 			frame.addClass('active').removeClass('pending');
 
-			$.ajax({
-				type: 'POST',
-				url: qx.ajaxUrl + '&controller=maintenance&task=removeUpdateRecord&active=1'
-			})
+			qx.request('maintenance', 'removeUpdateRecord', {})
 			.done(function(result){
 				var stateMessage	= result.state ? 'Success' : 'Failed';
 				var item = $('<li>');
@@ -298,17 +208,14 @@ var qx = {
 				qx.maintenance.updateAssets();
 			});
 		},
-		
+
 		updateAssets: function()
 		{
 			var frame = $('[data-progress-updateassets]');
 
 			frame.addClass('active').removeClass('pending');
 
-			$.ajax({
-				type: 'POST',
-				url: qx.ajaxUrl + '&controller=maintenance&task=updateAssets&active=1'
-			})
+			qx.request('maintenance', 'updateAssets', {})
 			.done(function(result){
 				var stateMessage	= result.state ? 'Success' : 'Failed';
 				var item = $('<li>');
@@ -330,30 +237,6 @@ var qx = {
 				$('[data-installation-form]').submit();
 			});
 		}
-	},
-	verification: {
-		getInfo: function() {
-			$('[data-licenses]').addClass('hide');
-			$('[data-checking]').removeClass('hide');
-			qx.installation.ajaxCall('getAuthInfo', {}, function(result){
-				// console.log(result.length);
-				for (var i = 0; i < result.length; i++) {
-					// console.log(result[i].name);
-					if(result[i].name == 'username')
-					{
-						$('#usernameInput').val(result[i].params);
-					}
-					else if(result[i].name == 'key')
-					{
-						$('#keyInput').val(result[i].params);
-					}
-				}
-
-				$('[data-checking]').addClass('hide');
-				$('[data-licenses]').removeClass('hide');
-
-			});
-		},
 	},
 	core: {
 		checkUpdate: function() {
@@ -388,19 +271,16 @@ var qx = {
 
 			});
 		},
-		ajaxCall: function(task, properties, callback) {
-
-			var prop = $.extend({
-				"path": qx.installation.path
-			}, properties);
-
-			$.ajax({
-				type: "POST",
-				url: qx.ajaxUrl + "&controller=update&task=" + task ,
-				data: prop
-			}).done(function(result) {
-				callback.apply(this, [result]);
-			});
+		ajaxCall: function (task, properties, callback) {
+			qx.request('update', task, properties)
+				.done(function (result) { callback(result); })
+				.fail(function (jqXHR) {
+					callback({
+						state: false,
+						message: (jqXHR.responseJSON && jqXHR.responseJSON.message) ||
+							'The request failed (HTTP ' + jqXHR.status + ').'
+					});
+				});
 		},
 	}
 }
@@ -424,9 +304,14 @@ qx.debug = {
 	 * Download the debug log file directly
 	 * @returns {void}
 	 */
-	downloadLog: function() {
-		// Create a download link and navigate directly to file download URL
-		window.location.href = qx.ajaxUrl + "&controller=license&task=downloadDebugLog";
+	downloadLog: function () {
+		var form = $('<form>', {
+			method: 'POST',
+			action: qx.ajaxUrl + '&controller=license&task=downloadDebugLog'
+		});
+
+		form.append($('<input>', { type: 'hidden', name: window.iquix.token, value: 1 }));
+		form.appendTo('body').submit().remove();
 	}
 }
 

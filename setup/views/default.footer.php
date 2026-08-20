@@ -29,7 +29,7 @@ $(document).ready( function(){
 	});
 
 	cancel.on('click', function() {
-		window.location = '<?php echo JURI::base();?>index.php';
+		window.location = '<?php echo \Joomla\CMS\Uri\Uri::base();?>index.php';
 	});
 
 	retry.on('click', function() {
@@ -64,9 +64,9 @@ $(document).ready( function(){
 				</span>
 				<span>
 					<?php if ($active > 1) { ?>
-						<?php echo JText::_('Previous'); ?>
+						<?php echo \Joomla\CMS\Language\Text::_('Previous'); ?>
 					<?php } else { ?>
-						<?php echo JText::_('Exit Installation'); ?>
+						<?php echo \Joomla\CMS\Language\Text::_('Exit Installation'); ?>
 					<?php } ?>
 				</span>
 			</b>
@@ -79,12 +79,12 @@ $(document).ready( function(){
 					<span>
 						<i class="qx-icon icon-download mr-1"></i>
 					</span>
-					<span><?php echo JText::_('Download Debug Log'); ?></span>
+					<span><?php echo \Joomla\CMS\Language\Text::_('Download Debug Log'); ?></span>
 				</b>
 			</a>
 			<a href="javascript:void(0);" class="btn btn-primary" data-installation-submit>
 			<b>
-				<span><?php echo JText::_('Next'); ?></span>
+				<span><?php echo \Joomla\CMS\Language\Text::_('Next'); ?></span>
 				<span>
 					<i class="qx-icon icon-arrow-right-2 ml-2"></i>
 				</span>
@@ -95,7 +95,7 @@ $(document).ready( function(){
 
 		<a href="javascript:void(0);" class="col-cell loading d-none disabled" data-installation-loading>
 			<b>
-				<span><?php echo JText::_('Loading'); ?></span>
+				<span><?php echo \Joomla\CMS\Language\Text::_('Loading'); ?></span>
 				<span>
 					<b class="ui loader"></b>
 				</span>
@@ -104,7 +104,7 @@ $(document).ready( function(){
 
 		<a href="javascript:void(0);" class="col-cell primary d-none" data-installation-refresh>
 			<b>
-				<span><?php echo JText::_('Retry'); ?></span>
+				<span><?php echo \Joomla\CMS\Language\Text::_('Retry'); ?></span>
 				<span>
 					<i class="qx-icon icon-arrow-right-2 ml-2"></i>
 				</span>
@@ -113,7 +113,7 @@ $(document).ready( function(){
 
 		<a href="javascript:void(0);" class="col-cell primary d-none" data-installation-retry>
 			<b>
-				<span><?php echo JText::_('Retry'); ?></span>
+				<span><?php echo \Joomla\CMS\Language\Text::_('Retry'); ?></span>
 				<span>
 					<i class="qx-icon icon-arrow-right-2 ml-2"></i>
 				</span>
@@ -130,12 +130,12 @@ $(document).ready( function(){
 				<span>
 					<i class="qx-icon icon-download mr-1"></i>
 				</span>
-				<span><?php echo JText::_('Download Debug Log'); ?></span>
+				<span><?php echo \Joomla\CMS\Language\Text::_('Download Debug Log'); ?></span>
 			</b>
 		</a>
 
-		<a class="btn btn-primary" href="<?php echo JURI::root();?>administrator/index.php?option=com_quix">
-			<b><span><?php echo JText::_('Start Building 👋🏻');?></span></b>
+		<a class="btn btn-primary" href="<?php echo \Joomla\CMS\Uri\Uri::root();?>administrator/index.php?option=com_quix">
+			<b><span><?php echo \Joomla\CMS\Language\Text::_('Start Building 👋🏻');?></span></b>
 		</a>
 	</div>
 <?php } ?>

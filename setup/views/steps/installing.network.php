@@ -63,8 +63,6 @@ defined('_JEXEC') or die('Unauthorized Access');
 <script type="text/javascript">
 	jQuery(document).ready(function() {
 		jQuery('[data-installation-submit]').hide();
-		qx.ajaxUrl =
-			"<?php echo JURI::root();?>administrator/index.php?option=com_iquix&ajax=1";
 		// Immediately proceed with installation
 		qx.installation.download();
 	});
