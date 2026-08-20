@@ -173,6 +173,15 @@ final class Installation extends AbstractController
             $this->container->installer()->cleanup($archive, $dir);
         }
 
+        // PackageInstaller::cleanup() only removes the archive file and the
+        // extracted install_xxxxx/ directory. The wrapper directory
+        // (tmp/iquix-{random}/) belongs to Downloader, which created it in
+        // fetch() — so Downloader is the one that removes it, whether or not
+        // the archive file is still there to unlink.
+        if ($archive !== '') {
+            $this->container->downloader()->cleanup($archive);
+        }
+
         $store->setMany(['install_archive' => '', 'install_dir' => '']);
 
         $this->ok('Installation finished.');
