@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 
 final class LicenseClientTest extends TestCase
 {
-    private function client(array $responses, ArrayStore $store = null): array
+    private function client(array $responses, ?ArrayStore $store = null): array
     {
         $store  = $store ?? new ArrayStore();
         $http   = new FakeHttpClient($responses);
