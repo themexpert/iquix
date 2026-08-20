@@ -7,3 +7,11 @@ require __DIR__ . '/../vendor/autoload.php';
 if (!defined('_JEXEC')) {
     define('_JEXEC', 1);
 }
+
+if (!defined('JVERSION')) {
+    define('JVERSION', '6.1.2');
+}
+
+if (!defined('IQX_VERSION')) {
+    define('IQX_VERSION', '2.0.0');
+}
