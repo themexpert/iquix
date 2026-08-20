@@ -61,7 +61,7 @@ final class Installation extends AbstractController
         foreach (['/media/quix/css', '/media/quix/js', '/media/quixnxt/css', '/media/quixnxt/js'] as $relative) {
             $path = JPATH_ROOT . $relative;
 
-            if (!Folder::exists($path)) {
+            if (!is_dir($path)) {
                 continue;
             }
 

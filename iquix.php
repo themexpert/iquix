@@ -21,15 +21,20 @@ $input = $app->getInput();
 $file  = JPATH_ROOT . '/tmp/quix.installation';
 
 if ($input->get('exitInstallation', false, 'bool')) {
-    if (File::exists($file)) {
+    if (is_file($file)) {
         File::delete($file);
     }
 
     $app->redirect('index.php?option=com_quix');
 }
 
-if ($input->get('launchInstaller', false, 'bool') && !File::exists($file)) {
-    File::write($file, json_encode(['new' => false, 'step' => 1, 'status' => 'installing']));
+if ($input->get('launchInstaller', false, 'bool') && !is_file($file)) {
+    // Joomla 4's File::write() takes $buffer by reference, so the payload has
+    // to be a variable — passing json_encode(...) straight in is a fatal
+    // "Cannot pass parameter 2 by reference" there.
+    $marker = json_encode(['new' => false, 'step' => 1, 'status' => 'installing']);
+
+    File::write($file, $marker);
 }
 
 require_once __DIR__ . '/setup/bootstrap.php';

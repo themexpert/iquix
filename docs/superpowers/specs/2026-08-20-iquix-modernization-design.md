@@ -176,12 +176,38 @@ Each item is a defect in the current code, not a hardening nice-to-have.
 
 ## Joomla 4/5/6 compatibility
 
-`Joomla\CMS\Filesystem\*` does not exist in J6. The framework package
-`Joomla\Filesystem\*` exists in J4, J5 and J6 and is the only safe choice; all
-filesystem calls use it. `Factory::getConfig()`, `Factory::getDbo()`,
-`Factory::getUser()`, `Session::checkToken()` and
-`Installer::getInstance()->install($path)` are present in J6 and are used
-unconditionally, with no version branching.
+`Joomla\CMS\Filesystem\*` does not exist in J6 outside an optional compatibility
+plugin, so it cannot be used. The framework package `Joomla\Filesystem\*` is
+present in all three trees — but *the package being present is not the same as a
+method being present*, and treating it as such is what broke J4 and J5 in the
+first draft of this work.
+
+The rule is therefore two-part:
+
+1. Use the namespaced framework classes (`Joomla\Filesystem\File`,
+   `Joomla\Filesystem\Folder`), never the `Joomla\CMS\Filesystem\*` aliases.
+2. Only call methods that exist in the **oldest** supported tree. J4 ships
+   `joomla/filesystem` 2.0.0, J5 ships 3.1.0, J6 ships 4.2.0. `File::exists()`
+   and `Folder::exists()` were added in 4.x and exist **only in J6**; calling
+   them on J4/J5 is a fatal `Call to undefined method`. `File::write()`'s
+   `$buffer` is by reference in J4 (`write($file, &$buffer, ...)`) and by value
+   from J5 on, so its second argument must always be a variable, never a
+   function-call result.
+
+For existence checks, prefer plain PHP: `is_file()` and `is_dir()`. They are
+version-proof, have no framework dependency, and are what J6's own
+`PackageAdapter` uses internally. The framework classes are used only for
+`write`, `delete` and `files`, all of which exist in `joomla/filesystem` 2.0.0.
+
+`Factory::getConfig()`, `Factory::getDbo()`, `Factory::getUser()`,
+`Session::checkToken()` and `Installer::getInstance()->install($path)` are
+present in J4, J5 and J6 and are used unconditionally, with no version
+branching.
+
+The manifest declares `<php_minimum>8.1</php_minimum>` and `script.php`'s
+`preflight()` refuses the install below that, because `setup/lib` uses PHP 8.1
+syntax (`readonly`, `never`, `match`) that a J4 site on PHP 7.4 would only
+parse-error on later, inside the wizard.
 
 ## Verification
 

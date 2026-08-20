@@ -12,7 +12,7 @@ final class Maintenance extends AbstractController
     {
         $marker = JPATH_ROOT . '/tmp/quix.installation';
 
-        if (File::exists($marker)) {
+        if (is_file($marker)) {
             File::delete($marker);
         }
 

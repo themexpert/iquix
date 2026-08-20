@@ -8,6 +8,9 @@
     <authorEmail>info@themexpert.com</authorEmail>
     <authorUrl>http://www.themexpert.com</authorUrl>
     <version>2.0.0</version>
+    <!-- setup/lib uses readonly properties, never-return types and match(),
+         all of which are PHP 8.1 syntax. -->
+    <php_minimum>8.1</php_minimum>
     <description>Page builder for Joomla</description>
     <scriptfile>script.php</scriptfile>
 

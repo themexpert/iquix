@@ -17,12 +17,37 @@ use Joomla\Filesystem\File;
 
 class Com_IquixInstallerScript
 {
+    /**
+     * setup/lib is written against PHP 8.1 syntax (readonly properties, the
+     * never return type, match). Nothing in this script file uses it, so an
+     * older site can still load the script far enough to be told why the
+     * install is refused instead of parse-erroring later inside the wizard.
+     */
+    private const MINIMUM_PHP = '8.1.0';
+
     public function preflight($type, $parent)
     {
+        if (version_compare(PHP_VERSION, self::MINIMUM_PHP, '<')) {
+            Factory::getApplication()->enqueueMessage(
+                sprintf(
+                    'Quix Installer needs PHP %s or newer. This site runs PHP %s.',
+                    self::MINIMUM_PHP,
+                    PHP_VERSION
+                ),
+                'error'
+            );
+
+            return false;
+        }
+
         $file = JPATH_ROOT . '/tmp/quix.installation';
 
-        if (!File::exists($file)) {
-            File::write($file, json_encode(['new' => false, 'step' => 1, 'status' => 'installing']));
+        if (!is_file($file)) {
+            // Joomla 4's File::write() takes $buffer by reference, so the
+            // payload has to be a variable.
+            $marker = json_encode(['new' => false, 'step' => 1, 'status' => 'installing']);
+
+            File::write($file, $marker);
         }
 
         return true;
