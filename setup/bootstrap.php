@@ -12,7 +12,6 @@ use Joomla\CMS\Uri\Uri;
 
 require_once __DIR__ . '/lib/autoload.php';
 
-define('QX_SETUP_PATH', __DIR__);
 define('QX_SETUP_URL', rtrim(Uri::root(), '/') . '/administrator/components/com_iquix/setup');
 define('QX_CONFIG', __DIR__ . '/config');
 define('QX_THEMES', __DIR__ . '/views');
