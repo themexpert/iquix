@@ -85,16 +85,53 @@ final class UpdateSite
     }
 
     /**
+     * The names older iQuix releases gave Quix's own update site. `Quix` is
+     * what setup/controllers/update.php wrote before the rewrite.
+     */
+    private const LEGACY_SITE_NAMES = ['Quix', Config::UPDATE_SITE_NAME];
+
+    /**
      * Drop any update site still pointing at the retired ThemeXpert API, so a
      * site upgraded from an older iQuix stops asking a dead server.
+     *
+     * Scoped to Quix's own rows. Matching every `%themexpert.com%` location
+     * deleted the update sites of any *other* ThemeXpert extension on the
+     * site, permanently and silently.
      */
     private function purgeRetiredSites(): void
     {
-        $db    = Factory::getDbo();
+        $db = Factory::getDbo();
+
+        // Quix's own extension rows, so a retired site that was linked to one
+        // of them is caught even if it was never named "Quix".
+        $quixExtensionIds = array_values(array_filter([
+            $this->extensionId('pkg_quix'),
+            $this->extensionId('com_quix'),
+        ]));
+
         $query = $db->getQuery(true)
-            ->select($db->quoteName('update_site_id'))
-            ->from($db->quoteName('#__update_sites'))
-            ->where($db->quoteName('location') . ' LIKE ' . $db->quote('%themexpert.com%'));
+            ->select('DISTINCT ' . $db->quoteName('s.update_site_id'))
+            ->from($db->quoteName('#__update_sites', 's'))
+            ->leftJoin(
+                $db->quoteName('#__update_sites_extensions', 'se')
+                . ' ON ' . $db->quoteName('se.update_site_id') . ' = ' . $db->quoteName('s.update_site_id')
+            )
+            ->where($db->quoteName('s.location') . ' LIKE ' . $db->quote('%themexpert.com%'));
+
+        $ownership = [
+            $db->quoteName('s.name') . ' IN (' . implode(
+                ',',
+                array_map([$db, 'quote'], self::LEGACY_SITE_NAMES)
+            ) . ')',
+        ];
+
+        if ($quixExtensionIds !== []) {
+            $ownership[] = $db->quoteName('se.extension_id')
+                . ' IN (' . implode(',', $quixExtensionIds) . ')';
+        }
+
+        $query->where('(' . implode(' OR ', $ownership) . ')');
+
         $db->setQuery($query);
 
         $ids = array_map('intval', (array) $db->loadColumn());
