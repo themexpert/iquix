@@ -35,20 +35,32 @@ final class Installation extends AbstractController
 
     public function download(): never
     {
-        $edition = $this->container->store()->get('edition', 'free');
+        $store   = $this->container->store();
+        $edition = $store->get('edition', 'free');
 
         try {
-            $source   = $this->container->sources()->resolve($edition);
-            $archive  = $this->container->downloader()->fetch($source);
-            $extract  = $this->container->installer()->unpack($archive);
+            $source  = $this->container->sources()->resolve($edition);
+            $archive = $this->container->downloader()->fetch($source);
         } catch (\Throwable $e) {
             $this->fail($e->getMessage());
         }
 
-        $this->container->store()->setMany([
-            'install_archive' => $archive,
-            'install_dir'     => $extract,
-        ]);
+        // Record the archive the moment it exists. installPost() is what
+        // deletes it and it can only delete what the store knows about, so
+        // storing this only after unpack() succeeded left the (possibly
+        // paid) package sitting in tmp/ forever whenever unpack() threw.
+        $store->set('install_archive', $archive);
+
+        try {
+            $extract = $this->container->installer()->unpack($archive);
+        } catch (\Throwable $e) {
+            $this->container->downloader()->cleanup($archive);
+            $store->set('install_archive', '');
+
+            $this->fail($e->getMessage());
+        }
+
+        $store->set('install_dir', $extract);
 
         $this->ok(
             sprintf('Quix %s (%s) downloaded.', $source->version, $edition),
