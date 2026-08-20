@@ -34,9 +34,14 @@ var qx = {
 				.fail(function (jqXHR) { callback(qx.requestError(jqXHR)); });
 		},
 
+		// Show/hide throughout the wizard is a single class contract:
+		// bootstrap.min.css defines .d-none{display:none!important} and
+		// nothing else. Neither stylesheet defines .hide or .hidden, and the
+		// inline display jQuery .show() writes loses to that !important --
+		// which is why the Retry button could never actually appear.
 		showRetry: function(step) {
-			$('[data-installation-retry]').data('retry-step', step).show();
-			$('[data-installation-loading]').hide();
+			$('[data-installation-retry]').data('retry-step', step).removeClass('d-none');
+			$('[data-installation-loading]').addClass('d-none');
 		},
 
 		download: function() {
@@ -120,10 +125,10 @@ var qx = {
 					return false;
 				}
 
-				$( '[data-installation-completed]' ).show();
+				$( '[data-installation-completed]' ).removeClass( 'd-none' );
 
-				$( '[data-installation-loading]' ).hide();
-				$( '[data-installation-submit]' ).show();
+				$( '[data-installation-loading]' ).addClass( 'd-none' );
+				$( '[data-installation-submit]' ).removeClass( 'd-none' );
 
 				$( '[data-installation-submit]' ).bind( 'click' , function(){
 					$( '[data-installation-form]' ).submit();
@@ -244,8 +249,8 @@ var qx = {
 		},
 
 		complete: function() {
-			$('[data-installation-loading]').hide();
-			$('[data-installation-submit]').show();
+			$('[data-installation-loading]').addClass('d-none');
+			$('[data-installation-submit]').removeClass('d-none');
 
 			$('[data-installation-submit]').on('click', function() {
 				$('[data-installation-form]').submit();
@@ -254,8 +259,8 @@ var qx = {
 	},
 	core: {
 		checkUpdate: function() {
-			jQuery('[data-update-checking]').removeClass('hide');
-			jQuery('[data-installation-form]').addClass('hide');
+			jQuery('[data-update-checking]').removeClass('d-none');
+			jQuery('[data-installation-form]').addClass('d-none');
 			qx.core.ajaxCall('updateScript', {}, function(result){
 
 				if(result.state && result.stateMessage == 302)
@@ -274,14 +279,18 @@ var qx = {
 				}
 				else if(!result.state)
 				{
-					console.warn(result.state);
-					// already uptodate for this session
-					$('[data-update-checking]').html('<div class="alert alert-danger">' + result.message + '<.div>');
-					return;					
+					console.warn(result.message);
+
+					// Leave the notice on screen, but put the form back:
+					// failing to check for an iQuix update is not a reason to
+					// strand the user on a page with nothing to click.
+					$('[data-update-checking]').html('<div class="alert alert-danger">' + result.message + '</div>');
+					$('[data-installation-form]').removeClass('d-none');
+					return;
 				}
 
-				$('[data-update-checking]').addClass('hide');
-				$('[data-installation-form]').removeClass('hide');
+				$('[data-update-checking]').addClass('d-none');
+				$('[data-installation-form]').removeClass('d-none');
 
 			});
 		},

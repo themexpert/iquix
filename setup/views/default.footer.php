@@ -35,9 +35,12 @@ $(document).ready( function(){
 	retry.on('click', function() {
 		var step = $(this).data('retry-step');
 
-		$(this).addClass('hide');
+		// d-none is the only hide class the loaded stylesheets define, and it
+		// carries !important -- so it is also the only one a jQuery .show()
+		// could not undo. Every show/hide in this wizard toggles d-none.
+		$(this).addClass('d-none');
 
-		loading.removeClass('hide');
+		loading.removeClass('d-none');
 
 		if (typeof qx.installation[step] !== 'function') {
 			console.error('Unknown retry step: ' + step);
@@ -49,7 +52,7 @@ $(document).ready( function(){
 });
 </script>
 
-<form action="index.php?option=com_iquix" method="post" data-installation-form-nav class="hidden">
+<form action="index.php?option=com_iquix" method="post" data-installation-form-nav class="d-none">
 	<input type="hidden" name="active" value="<?php echo $active ?>" data-installation-form-nav-active />
 	<input type="hidden" name="option" value="com_iquix" />
 	<?php //if ($reinstall) { ?>

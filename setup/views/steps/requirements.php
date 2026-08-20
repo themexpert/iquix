@@ -147,8 +147,8 @@ foreach ($files as $file) {
 		});
 
 		<?php if ($hasErrors) { ?>
-		$('[data-installation-submit]').hide();
-		$('[data-installation-refresh]').removeClass('hide');
+		$('[data-installation-submit]').addClass('d-none');
+		$('[data-installation-refresh]').removeClass('d-none');
 
 		// now we rebind the click.
 		$('[data-installation-refresh]').on('click', function() {
@@ -490,7 +490,6 @@ $checkUpdate = $session->get('quix.scriptupdate', false);
 if (!$checkUpdate): ?>
 <script type="text/javascript">
 	jQuery(document).ready(function() {
-		// jQuery('[data-installation-form]').addClass('hide');
 		// Immediately proceed with installation
 		qx.core.checkUpdate();
 	});

@@ -20,7 +20,7 @@ defined('_JEXEC') or die('Unauthorized Access');
 			...</p>
 	</div>
 
-	<div class="mb-2" style="display: none;" data-installation-completed>
+	<div class="mb-2 d-none" data-installation-completed>
 		<hr />
 		<div class="text-success">Installation completed successfully. Please click on the Next Step button to proceed.
 		</div>
@@ -62,7 +62,7 @@ defined('_JEXEC') or die('Unauthorized Access');
 
 <script type="text/javascript">
 	jQuery(document).ready(function() {
-		jQuery('[data-installation-submit]').hide();
+		jQuery('[data-installation-submit]').addClass('d-none');
 		// Immediately proceed with installation
 		qx.installation.download();
 	});

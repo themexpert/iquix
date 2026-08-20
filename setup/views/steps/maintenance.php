@@ -51,7 +51,7 @@ defined('_JEXEC') or die('Unauthorized Access');
 
 <script type="text/javascript">
 $(document).ready(function(){
-	jQuery('[data-installation-submit]').hide();
+	jQuery('[data-installation-submit]').addClass('d-none');
 	qx.maintenance.init();
 });
 </script>
