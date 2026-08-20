@@ -12,44 +12,26 @@
 defined('_JEXEC') or die('Unauthorized Access');
 
 use Joomla\CMS\Factory;
-use Joomla\CMS\Filesystem\File;
-use Joomla\CMS\Log\Log;
-// define version
-define('IQX_VERSION', '1.8.0');
+use Joomla\Filesystem\File;
 
-if (defined('JDEBUG') && JDEBUG) {
-	Log::addLogger(array('text_file' => 'iquix.log.php'), Log::ALL, array('iquix'));
+define('IQX_VERSION', '2.0.0');
+
+$app   = Factory::getApplication();
+$input = $app->getInput();
+$file  = JPATH_ROOT . '/tmp/quix.installation';
+
+if ($input->get('exitInstallation', false, 'bool')) {
+    if (File::exists($file)) {
+        File::delete($file);
+    }
+
+    $app->redirect('index.php?option=com_quix');
 }
 
-$app = Factory::getApplication();
-$input = $app->input;
-$exitInstallation = $input->get('exitInstallation', false, 'bool');
-
-// Check if there's a file initiated for installation
-$file = JPATH_ROOT . '/tmp/quix.installation';
-if ($exitInstallation) {
-	if (File::exists($file)) {
-		File::delete($file);
-		return $app->redirect('index.php?option=com_quix');
-	}
+if ($input->get('launchInstaller', false, 'bool') && !File::exists($file)) {
+    File::write($file, json_encode(['new' => false, 'step' => 1, 'status' => 'installing']));
 }
 
-// check if we need to proceed with installation
-$launchInstaller = $input->get('launchInstaller', false, 'bool');
-if ($launchInstaller) {
-	// Determines if the installation is a new installation or old installation.
-	$obj = new stdClass();
-	$obj->new = false;
-	$obj->step = 1;
-	$obj->status = 'installing';
+require_once __DIR__ . '/setup/bootstrap.php';
 
-	$contents = json_encode($obj);
-
-	if (!File::exists($file)) {
-		File::write($file, $contents);
-	}
-}
-
-// finally check for setup view or not
-require_once(dirname(__FILE__) . '/setup/bootstrap.php');
-JExit();
+$app->close();

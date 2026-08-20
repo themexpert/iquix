@@ -15,7 +15,7 @@ final class RouterTest extends TestCase
         $this->assertSame('IQuix\Setup\Controller\License', $router->resolve('license', 'verify'));
     }
 
-    public function testItRejectsAnUnknownControllerWithForbidden(): void
+    public function testItRejectsAnUnknownControllerWithNotAllowed(): void
     {
         $router = new Router(new FakeGuard(true, true));
 

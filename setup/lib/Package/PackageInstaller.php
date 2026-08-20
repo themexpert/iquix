@@ -18,10 +18,6 @@ use Joomla\Filesystem\Folder;
  */
 final class PackageInstaller
 {
-    public function __construct(private readonly string $tmpPath)
-    {
-    }
-
     /**
      * @return string the directory the package was extracted into
      */
