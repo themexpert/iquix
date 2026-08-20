@@ -157,7 +157,11 @@ final class Installation extends AbstractController
         $message = sprintf('%d extensions installed.', count($installed));
 
         if ($skipped !== []) {
-            $message .= sprintf(' %d were already in place from an earlier attempt.', count($skipped));
+            $message .= sprintf(
+                ' %d %s already in place from an earlier attempt.',
+                count($skipped),
+                count($skipped) === 1 ? 'was' : 'were'
+            );
         }
 
         $this->ok($message, ['installed' => $installed, 'skipped' => $skipped]);
