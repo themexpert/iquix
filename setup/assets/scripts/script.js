@@ -137,23 +137,49 @@ var qx = {
 			});
 		},
 
+		// Three outcomes, not two.
+		//
+		// A step can finish without having done its job -- syncDb() when the
+		// package postflight throws, installPost() when the update site cannot
+		// be configured. Those come back with state true (the run continues)
+		// and warning true. Deriving the badge from state alone printed them
+		// in green under the word "Success", which cancelled out the very
+		// message they were trying to deliver.
+		//
+		// Every class used here is defined by a stylesheet the wizard actually
+		// loads: text-success/text-warning/text-info in bootstrap.min.css,
+		// text-error in style.css.
 		update : function( element , obj , progress )
 		{
-			var className 		= obj.state ? ' text-success' : ' text-error',
-				stateMessage	= obj.state ? 'Success' : 'Failed';
+			var className, stateMessage;
+
+			if ( ! obj.state ) {
+				className		= ' text-error';
+				stateMessage	= 'Failed';
+			} else if ( obj.warning ) {
+				className		= ' text-warning';
+				stateMessage	= 'Skipped';
+			} else {
+				className		= ' text-success';
+				stateMessage	= 'Success';
+			}
+
+			// Clear whichever state was there before: Retry re-runs a step,
+			// and with three possible classes they would otherwise stack.
+			var stale = 'text-info text-success text-warning text-error';
 
 			// Update the state
 			$( '[' + element + ']' )
 			.find( '.progress-state' )
 			.html( stateMessage )
-			.removeClass( 'text-info' )
+			.removeClass( stale )
 			.addClass( className );
 
 			// Update the message
 			$( '[' + element + ']' )
 			.find( '.notes' )
 			.html( obj.message )
-			.removeClass( 'text-info' )
+			.removeClass( stale )
 			.addClass( className );
 
 			// Update the progress
