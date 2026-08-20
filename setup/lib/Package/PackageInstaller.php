@@ -173,6 +173,11 @@ final class PackageInstaller
             $table->protected = 0;
             $table->access    = 1;
             $table->params    = '{}';
+
+            // #__extensions.custom_data is NOT NULL with no default, so a row
+            // built by hand has to supply it or MySQL refuses the insert in
+            // strict mode. Joomla's adapters set it for the same reason.
+            $table->custom_data = '';
         }
 
         $table->name           = trim((string) $xml->name) ?: $element;
@@ -257,7 +262,15 @@ final class PackageInstaller
         $query = $db->getQuery(true)
             ->update($db->quoteName('#__extensions'))
             ->set($db->quoteName('package_id') . ' = ' . $packageId)
-            ->whereIn($db->quoteName('extension_id'), $ids);
+            ->whereIn($db->quoteName('extension_id'), $ids)
+            // pkg_quix bundles pkg_jmedia, whose own adapter has already
+            // claimed its members. Leave those alone: taking them would
+            // orphan them from the package that actually owns them, so
+            // uninstalling pkg_jmedia would then remove nothing.
+            ->where(
+                '(' . $db->quoteName('package_id') . ' = 0 OR '
+                . $db->quoteName('package_id') . ' = ' . $packageId . ')'
+            );
 
         try {
             $db->setQuery($query)->execute();

@@ -181,10 +181,17 @@ final class UpdateSite
             return;
         }
 
-        $db->insertObject('#__update_sites_extensions', (object) [
+        // DatabaseDriver::insertObject() takes $object by reference in every
+        // supported Joomla version, so the row has to be a variable: passing
+        // the cast inline is a hard "could not be passed by reference" Error,
+        // and installPost() swallowed it -- which is the other half of why
+        // the update site ended up orphaned.
+        $link = (object) [
             'update_site_id' => $updateSiteId,
             'extension_id'   => $extensionId,
-        ]);
+        ];
+
+        $db->insertObject('#__update_sites_extensions', $link);
     }
 
     private function extensionId(string $element): int

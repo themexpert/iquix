@@ -197,10 +197,17 @@ final class Installation extends AbstractController
         $archive = $store->get('install_archive');
         $dir     = $store->get('install_dir');
 
+        $updateSiteError = '';
+
         try {
             $this->container->updateSite()->apply();
             $this->container->updateSite()->purgeUpdates();
         } catch (\Throwable $e) {
+            // Still not fatal — Quix is installed and the archive below must
+            // go regardless — but do not swallow it either. A silent catch
+            // here is how a broken update site went unnoticed.
+            $updateSiteError = $e->getMessage();
+
             Log::debug('Could not configure the update site: ' . $e->getMessage());
         }
 
@@ -220,6 +227,13 @@ final class Installation extends AbstractController
         }
 
         $store->setMany(['install_archive' => '', 'install_dir' => '']);
+
+        if ($updateSiteError !== '') {
+            $this->ok(
+                'Installation finished, but the Quix update site could not be configured, '
+                . 'so updates may not be offered: ' . $updateSiteError
+            );
+        }
 
         $this->ok('Installation finished.');
     }
