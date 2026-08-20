@@ -14,19 +14,24 @@ var qx = {
 		});
 	},
 
+	// Shared shape for a failed jqXHR, so every .fail() handler across the
+	// app reports the same way: server message when present, else a generic
+	// HTTP-status fallback.
+	requestError: function (jqXHR) {
+		return {
+			state: false,
+			message: (jqXHR.responseJSON && jqXHR.responseJSON.message) ||
+				'The request failed (HTTP ' + jqXHR.status + ').'
+		};
+	},
+
 	installation: {
 		path: null,
 
 		ajaxCall: function (task, properties, callback) {
 			qx.request('installation', task, properties)
 				.done(function (result) { callback(result); })
-				.fail(function (jqXHR) {
-					callback({
-						state: false,
-						message: (jqXHR.responseJSON && jqXHR.responseJSON.message) ||
-							'The request failed (HTTP ' + jqXHR.status + ').'
-					});
-				});
+				.fail(function (jqXHR) { callback(qx.requestError(jqXHR)); });
 		},
 
 		showRetry: function(step) {
@@ -77,11 +82,11 @@ var qx = {
 					return false;
 				}
 
-				qx.installation.syncdb();
+				qx.installation.syncDb();
 			});
 		},
 
-		syncdb: function()
+		syncDb: function()
 		{
 			// Install the admin stuffs
 			qx.installation.setActive( 'data-progress-syncdb' );
@@ -169,7 +174,25 @@ var qx = {
 			// Initializes the installation process.
 			qx.maintenance.finalizeMaintenance();
 		},
-		
+
+		// Renders a maintenance step's outcome — success or failure alike —
+		// into its own `.notes` list and progress-state badge. Returns
+		// whether the step succeeded, so callers know whether it is safe to
+		// chain on to the next step.
+		report: function (frame, result)
+		{
+			var className		= result.state ? 'text-success' : 'text-error',
+				stateMessage	= result.state ? 'Success' : 'Failed';
+
+			var item = $('<li>');
+			item.addClass(className).html(result.message);
+
+			frame.find('.notes ul').append(item);
+			frame.find('.progress-state').html(stateMessage);
+
+			return result.state;
+		},
+
 		finalizeMaintenance: function()
 		{
 			var frame = $('[data-progress-finalizing]');
@@ -177,15 +200,12 @@ var qx = {
 
 			qx.request('maintenance', 'cleanInstallation', {})
 			.done(function(result){
-				var stateMessage	= result.state ? 'Success' : 'Failed';
-
-				var item = $('<li>');
-				item.addClass('text-success').html(result.message);
-				$('[data-progress-finalizing] .notes ul').append(item);
-				$('[data-progress-finalizing] .progress-state').html( stateMessage );
-
-
-				qx.maintenance.remoeUpdateRecord();
+				if (qx.maintenance.report(frame, result)) {
+					qx.maintenance.remoeUpdateRecord();
+				}
+			})
+			.fail(function(jqXHR){
+				qx.maintenance.report(frame, qx.requestError(jqXHR));
 			});
 		},
 
@@ -197,15 +217,12 @@ var qx = {
 
 			qx.request('maintenance', 'removeUpdateRecord', {})
 			.done(function(result){
-				var stateMessage	= result.state ? 'Success' : 'Failed';
-				var item = $('<li>');
-				item.addClass('text-success').html(result.message);
-
-				$('[data-progress-updaterecord] .notes ul').append(item);
-				$('[data-progress-updaterecord] .progress-state').html( stateMessage );
-
-
-				qx.maintenance.updateAssets();
+				if (qx.maintenance.report(frame, result)) {
+					qx.maintenance.updateAssets();
+				}
+			})
+			.fail(function(jqXHR){
+				qx.maintenance.report(frame, qx.requestError(jqXHR));
 			});
 		},
 
@@ -217,15 +234,12 @@ var qx = {
 
 			qx.request('maintenance', 'updateAssets', {})
 			.done(function(result){
-				var stateMessage	= result.state ? 'Success' : 'Failed';
-				var item = $('<li>');
-				item.addClass('text-success').html(result.message);
-
-				$('[data-progress-updateassets] .notes ul').append(item);
-				$('[data-progress-updateassets] .progress-state').html( stateMessage );
-
-
-				qx.maintenance.complete();
+				if (qx.maintenance.report(frame, result)) {
+					qx.maintenance.complete();
+				}
+			})
+			.fail(function(jqXHR){
+				qx.maintenance.report(frame, qx.requestError(jqXHR));
 			});
 		},
 
@@ -274,13 +288,7 @@ var qx = {
 		ajaxCall: function (task, properties, callback) {
 			qx.request('update', task, properties)
 				.done(function (result) { callback(result); })
-				.fail(function (jqXHR) {
-					callback({
-						state: false,
-						message: (jqXHR.responseJSON && jqXHR.responseJSON.message) ||
-							'The request failed (HTTP ' + jqXHR.status + ').'
-					});
-				});
+				.fail(function (jqXHR) { callback(qx.requestError(jqXHR)); });
 		},
 	}
 }

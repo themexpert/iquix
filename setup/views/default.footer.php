@@ -39,7 +39,12 @@ $(document).ready( function(){
 
 		loading.removeClass('hide');
 
-		window['eb']['installation'][step]();
+		if (typeof qx.installation[step] !== 'function') {
+			console.error('Unknown retry step: ' + step);
+			return;
+		}
+
+		qx.installation[step]();
 	});
 });
 </script>

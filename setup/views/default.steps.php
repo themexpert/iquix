@@ -13,7 +13,7 @@ defined('_JEXEC') or die('Unauthorized Access');
 ?>
 
 <?php foreach ($steps as $step) { ?>
-<div class="d-flex flex-row mb-3<?php echo $step->className;?>">
+<div class="d-flex flex-row mb-3<?php echo $step->className ?? '';?>">
 	<span class="badge p-3 rounded-circle"><?php echo \Joomla\CMS\Language\Text::sprintf('%1$s', $step->index);?></span>
 	<div class="flex-fill pl-3">
 		<h4><?php echo \Joomla\CMS\Language\Text::_($step->title);?></h4>
