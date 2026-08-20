@@ -8,6 +8,7 @@ use IQuix\Setup\Log;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Installer\Installer;
 use Joomla\CMS\Installer\InstallerHelper;
+use Joomla\CMS\Table\Extension;
 use Joomla\Filesystem\File;
 use Joomla\Filesystem\Folder;
 
@@ -19,6 +20,17 @@ use Joomla\Filesystem\Folder;
  */
 final class PackageInstaller
 {
+    /**
+     * Extension ids reported by onExtensionAfterInstall during this request.
+     * Joomla's own PackageAdapter collects them the same way, to stamp
+     * package_id on the members it just installed.
+     *
+     * @var list<int>
+     */
+    private array $installedIds = [];
+
+    private bool $listening = false;
+
     /**
      * @return string the directory the package was extracted into
      */
@@ -80,6 +92,8 @@ final class PackageInstaller
             return false;
         }
 
+        $this->collectExtensionIds();
+
         $unpacked = InstallerHelper::unpack($archive, true);
 
         if ($unpacked === false || empty($unpacked['dir'])) {
@@ -112,6 +126,174 @@ final class PackageInstaller
         Log::debug('Installed ' . $filename);
 
         return true;
+    }
+
+    /**
+     * Register the package itself, now that its members are in.
+     *
+     * Installing only the members leaves no `pkg_quix` row in `#__extensions`
+     * and no `administrator/manifests/packages/pkg_quix.xml`, and the
+     * consequences all land on the customer: UpdateSite::apply() cannot link
+     * its update site to anything, purgeUpdates() has no extension to purge
+     * for, and Joomla's Updater writes the `#__updates` row with
+     * extension_id = 0 — which UpdateModel::getListQuery() filters out with
+     * `u.extension_id != 0`. The Quix update simply never appears on the
+     * Updates page, and com_quix's own manifest declares no update server to
+     * fall back on.
+     *
+     * This does by hand what PackageAdapter::storeExtension() and
+     * ::finaliseInstall() do: the extensions row, the manifest file, the
+     * manifest script, and package_id on the members.
+     *
+     * @return int the package's extension id, 0 if it could not be stored
+     */
+    public function registerPackage(string $extractDir): int
+    {
+        $manifestPath = $this->manifestPath($extractDir);
+        $xml          = simplexml_load_string((string) file_get_contents($manifestPath));
+
+        if ($xml === false) {
+            throw new \RuntimeException('The package manifest could not be parsed.');
+        }
+
+        // PackageAdapter::getElement() derives the element from the manifest
+        // filename, not from anything inside the file.
+        $element     = basename($manifestPath, '.xml');
+        $packageName = trim((string) $xml->packagename);
+
+        $db    = Factory::getDbo();
+        $table = new Extension($db);
+
+        if (!$table->load(['type' => 'package', 'element' => $element])) {
+            $table->type      = 'package';
+            $table->element   = $element;
+            $table->folder    = '';
+            $table->client_id = 0;
+            $table->enabled   = 1;
+            $table->protected = 0;
+            $table->access    = 1;
+            $table->params    = '{}';
+        }
+
+        $table->name           = trim((string) $xml->name) ?: $element;
+        $table->changelogurl   = trim((string) $xml->changelogurl);
+        $table->manifest_cache = (string) json_encode(Installer::parseXMLInstallFile($manifestPath));
+
+        if (!$table->store()) {
+            Log::debug('Could not store the pkg_quix extension row: ' . $table->getError());
+
+            return 0;
+        }
+
+        $packageId = (int) $table->extension_id;
+
+        $this->copyPackageManifest($manifestPath, $element, $packageName, (string) $xml->scriptfile, $extractDir);
+        $this->stampPackageId($packageId);
+
+        Log::debug('Registered ' . $element . ' as extension ' . $packageId);
+
+        return $packageId;
+    }
+
+    /**
+     * Joomla reads administrator/manifests/packages/{element}.xml on uninstall
+     * and to refresh the manifest cache; without it the package row is inert.
+     */
+    private function copyPackageManifest(
+        string $manifestPath,
+        string $element,
+        string $packageName,
+        string $scriptFile,
+        string $extractDir
+    ): void {
+        $target = JPATH_MANIFESTS . '/packages';
+
+        if (!is_dir($target) && !Folder::create($target)) {
+            Log::debug('Could not create ' . $target);
+
+            return;
+        }
+
+        if (!File::copy($manifestPath, $target . '/' . $element . '.xml')) {
+            Log::debug('Could not copy the package manifest to ' . $target);
+        }
+
+        $scriptFile = trim($scriptFile);
+
+        if ($scriptFile === '' || $packageName === '' || !is_file($extractDir . '/' . $scriptFile)) {
+            return;
+        }
+
+        // The script lives beside the manifest, under <packagename>, exactly
+        // where PackageAdapter::setupInstallPaths() puts the extension root.
+        $root = $target . '/' . $packageName;
+
+        if (!is_dir($root) && !Folder::create($root)) {
+            Log::debug('Could not create ' . $root);
+
+            return;
+        }
+
+        File::copy($extractDir . '/' . $scriptFile, $root . '/' . basename($scriptFile));
+    }
+
+    /**
+     * Tie the members installed in this request to the package, so Joomla's
+     * Manage view groups them and uninstalling the package takes them with it.
+     *
+     * Only the ids from this request are known. A run resumed after a timeout
+     * therefore stamps only what it installed itself; that costs grouping for
+     * the earlier members, nothing functional.
+     */
+    private function stampPackageId(int $packageId): void
+    {
+        $ids = array_values(array_unique(array_filter($this->installedIds)));
+
+        if ($packageId === 0 || $ids === []) {
+            return;
+        }
+
+        $db    = Factory::getDbo();
+        $query = $db->getQuery(true)
+            ->update($db->quoteName('#__extensions'))
+            ->set($db->quoteName('package_id') . ' = ' . $packageId)
+            ->whereIn($db->quoteName('extension_id'), $ids);
+
+        try {
+            $db->setQuery($query)->execute();
+        } catch (\Throwable $e) {
+            Log::debug('Could not set package_id on the installed extensions: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Installer::install() returns a bool, so the only way to learn the id of
+     * what it just installed is the event it fires. Registered once per
+     * instance, immediately before the first install.
+     */
+    private function collectExtensionIds(): void
+    {
+        if ($this->listening) {
+            return;
+        }
+
+        $this->listening = true;
+
+        try {
+            $dispatcher = Factory::getApplication()->getDispatcher();
+        } catch (\Throwable $e) {
+            Log::debug('No dispatcher available; package_id will not be set: ' . $e->getMessage());
+
+            return;
+        }
+
+        $dispatcher->addListener('onExtensionAfterInstall', function ($event): void {
+            $eid = $event->getArgument('eid', false);
+
+            if ($eid) {
+                $this->installedIds[] = (int) $eid;
+            }
+        });
     }
 
     public function cleanup(string $archivePath, string $extractDir): void

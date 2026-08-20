@@ -139,6 +139,19 @@ final class Installation extends AbstractController
             }
         }
 
+        // The members are in; register the package that owns them. Without a
+        // pkg_quix row and manifest, Joomla has nothing to hang the update
+        // site off and Quix updates never reach the Updates page.
+        try {
+            $packageId = $installer->registerPackage($dir);
+        } catch (\Throwable $e) {
+            $this->fail('The extensions installed, but the Quix package could not be registered: ' . $e->getMessage());
+        }
+
+        if ($packageId === 0) {
+            $this->fail('The extensions installed, but the Quix package could not be registered, so updates would not be offered.');
+        }
+
         $this->container->store()->set('installed_version', $installer->packageVersion($dir));
 
         $message = sprintf('%d extensions installed.', count($installed));
