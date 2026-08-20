@@ -8,6 +8,7 @@ use IQuix\Setup\Log;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Installer\Installer;
 use Joomla\CMS\Installer\InstallerHelper;
+use Joomla\Filesystem\File;
 use Joomla\Filesystem\Folder;
 
 /**
@@ -56,14 +57,27 @@ final class PackageInstaller
     /**
      * Install one bundled extension.
      *
+     * A member archive is deleted only once its extension has installed, so
+     * its absence is the progress marker for the run. That is what makes a
+     * retry resumable: this tool exists for hosts with small limits, where a
+     * run hitting max_execution_time part-way through is entirely normal, and
+     * the previous behaviour (delete the archive whether or not the install
+     * worked) turned any such interruption into a dead end — the next attempt
+     * failed on the first entry with "com_quix.zip is missing".
+     *
+     * @return bool true when this call installed the extension, false when an
+     *              earlier attempt already did and there was nothing to do
+     *
      * @throws \RuntimeException carrying whatever Joomla put on the message queue
      */
-    public function install(string $extractDir, string $filename): void
+    public function install(string $extractDir, string $filename): bool
     {
         $archive = $extractDir . '/' . $filename;
 
         if (!is_file($archive)) {
-            throw new \RuntimeException($filename . ' is missing from the package.');
+            Log::debug('Skipping ' . $filename . ': an earlier attempt already installed it');
+
+            return false;
         }
 
         $unpacked = InstallerHelper::unpack($archive, true);
@@ -82,13 +96,22 @@ final class PackageInstaller
 
         $installed = $installer->install($unpacked['dir']);
 
-        InstallerHelper::cleanupInstall($archive, $unpacked['extractdir'] ?? $unpacked['dir']);
+        // The working copy goes either way; the archive only on success.
+        $unpackedDir = (string) ($unpacked['extractdir'] ?? $unpacked['dir']);
+
+        if ($unpackedDir !== '' && is_dir($unpackedDir)) {
+            Folder::delete($unpackedDir);
+        }
 
         if (!$installed) {
             throw new \RuntimeException($filename . ' failed to install. ' . $this->lastMessage());
         }
 
+        File::delete($archive);
+
         Log::debug('Installed ' . $filename);
+
+        return true;
     }
 
     public function cleanup(string $archivePath, string $extractDir): void

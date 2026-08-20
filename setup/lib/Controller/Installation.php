@@ -108,22 +108,34 @@ final class Installation extends AbstractController
         }
 
         $installed = [];
+        $skipped   = [];
 
         foreach ($extensions as $filename) {
             try {
-                $installer->install($dir, $filename);
-                $installed[] = $filename;
+                // false means the archive is already gone, i.e. an earlier,
+                // interrupted attempt installed this one. Resuming rather
+                // than repeating is the point: on the low-limit hosting this
+                // tool exists for, a run that times out half way through has
+                // to be able to carry on from where it stopped.
+                if ($installer->install($dir, $filename)) {
+                    $installed[] = $filename;
+                } else {
+                    $skipped[] = $filename;
+                }
             } catch (\RuntimeException $e) {
-                $this->fail($e->getMessage(), ['installed' => $installed]);
+                $this->fail($e->getMessage(), ['installed' => $installed, 'skipped' => $skipped]);
             }
         }
 
         $this->container->store()->set('installed_version', $installer->packageVersion($dir));
 
-        $this->ok(
-            sprintf('%d extensions installed.', count($installed)),
-            ['installed' => $installed]
-        );
+        $message = sprintf('%d extensions installed.', count($installed));
+
+        if ($skipped !== []) {
+            $message .= sprintf(' %d were already in place from an earlier attempt.', count($skipped));
+        }
+
+        $this->ok($message, ['installed' => $installed, 'skipped' => $skipped]);
     }
 
     public function syncDb(): never
