@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="component" version="3.0" method="upgrade">
     <name>com_iquix</name>
-	<creationDate>11th April 2018</creationDate>
+	<creationDate>20th August 2026</creationDate>
     <copyright>Copyright (C) 2015. All rights reserved.</copyright>
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
     <author>ThemeXpert</author>
     <authorEmail>info@themexpert.com</authorEmail>
     <authorUrl>http://www.themexpert.com</authorUrl>
-    <version>1.8.0</version>
+    <version>2.0.0</version>
     <description>Page builder for Joomla</description>
     <scriptfile>script.php</scriptfile>
 
@@ -20,7 +20,6 @@
 			<folder>setup</folder>
 			<file>iquix.php</file>
 			<file>script.php</file>
-			<file>setup.html</file>
 			<file>config.xml</file>
 			<file>iquix.xml</file>
 			<file>access.xml</file>

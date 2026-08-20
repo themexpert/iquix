@@ -11,93 +11,63 @@
 */
 defined('_JEXEC') or die('Unauthorized Access');
 
-class com_iQuixInstallerScript
+use Joomla\CMS\Factory;
+use Joomla\CMS\Installer\InstallerScriptInterface;
+use Joomla\Filesystem\File;
+
+class Com_IquixInstallerScript
 {
-	/**
-	 * Triggers before the installers are copied
-	 *
-	 * @since	1.0
-	 * @access	public
-	 */
-	public function postflight()
-	{
-		ob_start();
-		include(__DIR__ . '/setup.html');
-		
-		$contents = ob_get_contents();
-		ob_end_clean();
+    public function preflight($type, $parent)
+    {
+        $file = JPATH_ROOT . '/tmp/quix.installation';
 
-		echo $contents;
-	}
+        if (!File::exists($file)) {
+            File::write($file, json_encode(['new' => false, 'step' => 1, 'status' => 'installing']));
+        }
 
-	/**
-	 * Triggers after the installers are copied
-	 *
-	 * @since	1.0
-	 * @access	public
-	 */
-	public function preflight()
-	{
-		// During the preflight, we need to create a new installer file in the temporary folder
-		$file = JPATH_ROOT . '/tmp/quix.installation';
+        return true;
+    }
 
-		// Determines if the installation is a new installation or old installation.
-		$obj = new stdClass();
-		$obj->new = false;
-		$obj->step = 1;
-		$obj->status = 'installing';
+    public function postflight($type, $parent)
+    {
+        $this->createConfigTable();
 
-		$contents = json_encode($obj);
+        Factory::getApplication()->enqueueMessage(
+            'Quix Installer is ready. Open it from Components → Quix Installer to install Quix.',
+            'message'
+        );
 
-		if (!JFile::exists($file)) {
-			JFile::write($file, $contents);
-		}
-	}
+        return true;
+    }
 
-	/**
-	 * Responsible to perform the installation
-	 *
-	 * @since	1.0
-	 * @access	public
-	 */
-	public function install()
-	{
-		$this->createTableConfig();
-	}
+    public function install($parent)
+    {
+        return true;
+    }
 
-	/**
-	 * Responsible to perform the uninstallation
-	 *
-	 * @since	1.0
-	 * @access	public
-	 */
-	public function uninstall()
-	{
-		// @TODO: Disable modules
-		// @TODO: Disable plugins
-	}
+    public function update($parent)
+    {
+        return true;
+    }
 
-	/**
-	 * Responsible to perform component updates
-	 *
-	 * @since	1.0
-	 * @access	public
-	 */
-	public function update()
-	{
-		$this->createTableConfig();
-	}
+    public function uninstall($parent)
+    {
+        return true;
+    }
 
-	function createTableConfig()
-	{
-		$db = JFactory::getDbo();
-		$sql = "
-		CREATE TABLE IF NOT EXISTS `#__quix_configs` (
-		  `name` varchar(255) NOT NULL,
-		  `params` text NOT NULL
-		) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COMMENT='Store any configuration in key => params maps';
-		";
-		$db->setQuery($sql);
-		return $db->execute();
-	}
+    private function createConfigTable(): bool
+    {
+        $db = Factory::getDbo();
+
+        // InnoDB, not MyISAM: com_quix reads and writes this table too.
+        $db->setQuery(
+            'CREATE TABLE IF NOT EXISTS ' . $db->quoteName('#__quix_configs') . ' ('
+            . $db->quoteName('name') . ' VARCHAR(255) NOT NULL,'
+            . $db->quoteName('params') . ' TEXT NOT NULL,'
+            . 'PRIMARY KEY (' . $db->quoteName('name') . ')'
+            . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        return (bool) $db->execute();
+    }
 }

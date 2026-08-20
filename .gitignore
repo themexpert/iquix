@@ -45,6 +45,3 @@ releases/
 /vendor/
 /.phpunit.cache/
 composer.lock
-
-setup/packages
-setup/tmp
