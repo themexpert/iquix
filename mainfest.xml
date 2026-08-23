@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <updates>
+<!--
+    <client>administrator</client> is declared because com_iquix installs into
+    administrator/. It is NOT load-bearing: Joomla's ExtensionAdapter seeds
+    client_id = 1 for every <update> element before parsing, so the previous
+    value ("site") also resolved to 1 and matched correctly. Verified against
+    Joomla 6.1.2 by running Updater::findUpdates() with both values — each
+    produced client_id=1 and a correct extension_id in #__updates.
+-->
         <update>
                 <name>Quix Launcher</name>
                 <description>iQuix is an installer extension</description>
