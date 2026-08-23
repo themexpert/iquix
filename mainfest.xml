@@ -6,7 +6,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>2.0.0</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v2.0.0</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v2.0.0/com_iquix_2.0.0.zip</downloadurl>
@@ -23,7 +23,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.8.0</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.8.0</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.8.0/com_iquix_1.8.0.zip</downloadurl>
@@ -39,7 +39,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.7.0</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.7.0</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.7.0/com_iquix_1.7.0.zip</downloadurl>
@@ -55,7 +55,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.6.0</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.6.0</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.6.0/com_iquix_v1.6.0.zip</downloadurl>
@@ -71,7 +71,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.5.0</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.5.0</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.5.0/com_iquix_v1.5.0.zip</downloadurl>
@@ -87,7 +87,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.4.0</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.4.0</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.4.0/com_iquix_v1.4.0.zip</downloadurl>
@@ -103,7 +103,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.3.0</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.3.0</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.3.0/com_iquix_v1.3.0.zip</downloadurl>
@@ -119,7 +119,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.2.0</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.2.0</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.2.0/com_iquix_v1.2.0.zip</downloadurl>
@@ -135,7 +135,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.1.0</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.1.0</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.1.0/com_iquix_v1.1.0.zip</downloadurl>
@@ -151,7 +151,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.0.4</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.0.4</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.0.4/com_iquix_v1.0.4.zip</downloadurl>
@@ -167,7 +167,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.0.3</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.0.3</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.0.3/com_iquix_v1.0.3.zip</downloadurl>
@@ -183,7 +183,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.0.2</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.0.2</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.0.2/com_iquix_v1.0.2.zip</downloadurl>
@@ -199,7 +199,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.0.1</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.0.1</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.0.1/com_iquix_v1.0.1.zip</downloadurl>
@@ -215,7 +215,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>1.0.0</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v1.0.0</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v1.0.0/com_iquix_v1.0.0.zip</downloadurl>
@@ -231,7 +231,7 @@
                 <element>com_iquix</element>
                 <type>component</type>
                 <version>0.0.1</version>
-                <client>site</client>
+                <client>administrator</client>
                 <infourl title="Quix Launcher">https://github.com/themexpert/iquix/releases/tag/v0.0.1</infourl>
                 <downloads>
                         <downloadurl type="full" format="zip">https://github.com/themexpert/iquix/releases/download/v0.0.1/com_iquix_v0.0.1.zip</downloadurl>
