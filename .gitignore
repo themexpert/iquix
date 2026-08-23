@@ -40,3 +40,8 @@ releases/
 !.gitignore
 !index.html
 !index.php
+
+# Composer / PHPUnit
+/vendor/
+/.phpunit.cache/
+composer.lock
