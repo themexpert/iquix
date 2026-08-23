@@ -5,6 +5,7 @@ namespace IQuix\Setup\Package;
 defined('_JEXEC') or die('Unauthorized Access');
 
 use IQuix\Setup\Config;
+use Joomla\Filesystem\Folder;
 use IQuix\Setup\Log;
 
 /**
@@ -17,6 +18,9 @@ use IQuix\Setup\Log;
  */
 final class Downloader
 {
+    /** Working directories older than this are abandoned; sweep them. */
+    private const STALE_AFTER = 86400;
+
     public function __construct(private readonly string $tmpPath)
     {
     }
@@ -28,6 +32,8 @@ final class Downloader
      */
     public function fetch(Source $source): string
     {
+        $this->sweepStale();
+
         $dir = $this->tmpPath . '/iquix-' . bin2hex(random_bytes(8));
 
         if (!@mkdir($dir, 0700, true) && !is_dir($dir)) {
@@ -149,6 +155,36 @@ final class Downloader
             throw new \RuntimeException(
                 'The downloaded package failed its checksum check. Please try again, and contact support if it keeps happening.'
             );
+        }
+    }
+
+    /**
+     * Remove working directories left by runs that never finished.
+     *
+     * A run that fails part way keeps its extraction directory on purpose, so
+     * the user can retry and resume. But a user who gives up — closes the tab,
+     * or never comes back after a failed step — leaves it there for good, and
+     * each one holds an unpacked copy of the package. Sweeping anything older
+     * than a day bounds that without ever touching a run still in progress.
+     */
+    private function sweepStale(): void
+    {
+        $cutoff = time() - self::STALE_AFTER;
+
+        foreach ((array) glob($this->tmpPath . '/iquix-*', GLOB_ONLYDIR) as $dir) {
+            $age = @filemtime($dir);
+
+            if ($age === false || $age > $cutoff) {
+                continue;
+            }
+
+            try {
+                Folder::delete($dir);
+                Log::debug('Swept stale download directory ' . basename($dir));
+            } catch (\Throwable $e) {
+                // A directory we cannot remove is not worth failing a download over.
+                Log::debug('Could not sweep ' . basename($dir) . ': ' . $e->getMessage());
+            }
         }
     }
 

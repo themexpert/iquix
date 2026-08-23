@@ -96,6 +96,32 @@ final class Installation extends AbstractController
     }
 
     /**
+     * Fail a step of the install run, dropping the downloaded archive but
+     * KEEPING the extraction directory.
+     *
+     * The distinction matters. The extract directory is what lets a retry
+     * resume where it stopped — the whole reason this tool exists is hosting
+     * that cannot swallow the package in one request. The outer archive is
+     * not needed for that: installExtensions() works purely from
+     * `install_dir`. Leaving it behind meant every failed run stranded a
+     * 15MB package — the paid one, for Pro — in tmp/ with nothing to
+     * collect it, because installPost() is what cleans up and a failed run
+     * never reaches it.
+     */
+    private function failHere(string $message, array $extra = []): never
+    {
+        $store   = $this->container->store();
+        $archive = $store->get('install_archive');
+
+        if ($archive !== '') {
+            $this->container->downloader()->cleanup($archive);
+            $store->set('install_archive', '');
+        }
+
+        $this->fail($message, $extra);
+    }
+
+    /**
      * Installs every extension the package manifest lists, in manifest order.
      * Replaces the five hardcoded per-type tasks the old JS called one by one.
      */
@@ -104,7 +130,7 @@ final class Installation extends AbstractController
         $dir = $this->container->store()->get('install_dir');
 
         if ($dir === '' || !is_dir($dir)) {
-            $this->fail('The downloaded package is missing. Please restart the installation.');
+            $this->failHere('The downloaded package is missing. Please restart the installation.');
         }
 
         $installer = $this->container->installer();
@@ -112,11 +138,11 @@ final class Installation extends AbstractController
         try {
             $extensions = $installer->extensions($dir);
         } catch (\RuntimeException $e) {
-            $this->fail($e->getMessage());
+            $this->failHere($e->getMessage());
         }
 
         if ($extensions === []) {
-            $this->fail('The package manifest listed no extensions to install.');
+            $this->failHere('The package manifest listed no extensions to install.');
         }
 
         $installed = [];
@@ -135,7 +161,7 @@ final class Installation extends AbstractController
                     $skipped[] = $filename;
                 }
             } catch (\RuntimeException $e) {
-                $this->fail($e->getMessage(), ['installed' => $installed, 'skipped' => $skipped]);
+                $this->failHere($e->getMessage(), ['installed' => $installed, 'skipped' => $skipped]);
             }
         }
 
@@ -145,11 +171,11 @@ final class Installation extends AbstractController
         try {
             $packageId = $installer->registerPackage($dir);
         } catch (\Throwable $e) {
-            $this->fail('The extensions installed, but the Quix package could not be registered: ' . $e->getMessage());
+            $this->failHere('The extensions installed, but the Quix package could not be registered: ' . $e->getMessage());
         }
 
         if ($packageId === 0) {
-            $this->fail('The extensions installed, but the Quix package could not be registered, so updates would not be offered.');
+            $this->failHere('The extensions installed, but the Quix package could not be registered, so updates would not be offered.');
         }
 
         $this->container->store()->set('installed_version', $installer->packageVersion($dir));
